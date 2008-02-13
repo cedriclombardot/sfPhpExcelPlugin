@@ -1,0 +1,40 @@
+= sfPhpExcel plugin =
+
+sfPhpExcelPlugin work work with [http://www.phpexcel.net PHPExcel]
+
+== Installation ==
+
+  * Install the plugin
+
+    {{{
+      symfony plugin-install http://plugins.symfony-project.com/sfPhpExcelPlugin
+    }}}
+
+
+== Documentation ==
+
+  * Show documentation and API on the [http://www.codeplex.com/PHPExcel/Release/ProjectReleases.aspx website]
+
+
+== Testing ==
+
+  * Show examples into the directory examples
+  
+  * For testing
+  
+  {{{
+    php plugins/sfPhpExcelPlugin/examples/01simple.php
+  }}}
+
+
+== Requirements ==
+  * PHP version 5.2 or higher
+  * PHP extension php_zip enabled
+  * PHP extension php_xml enabled
+
+
+== Changelog ==
+
+=== 1.0 ===
+ * PHPExcel version 1.5.5
+ * Modified examples for work with symfony
