@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (C) 2006 - 2007 PHPExcel
+ * Copyright (C) 2006 - 2008 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,7 @@
  * @package    PHPExcel_Shared_OLE
  * @copyright  Copyright (c) 2006 - 2007 Christian Schmidt
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version 1.5.5, 2007-12-24
+ * @version 1.6.0, 2008-02-14
  */
 
 require_once 'PHPExcel/Shared/OLE.php';

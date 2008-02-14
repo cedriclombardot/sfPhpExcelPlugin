@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (C) 2006 - 2007 PHPExcel
+ * Copyright (C) 2006 - 2008 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.5.5, 2007-12-24
+ * @version    1.6.0, 2008-02-14
  */
 
 /* Modified by Bertrand Zuchuat */
@@ -231,6 +231,9 @@ echo 'Value of B38 [=DATEDIF( DATE(2007, 12, 21), DATE(2007, 12, 22), "D" )]: ' 
 echo 'Value of B39 [=DATEVALUE("01-Feb-2006 10:06 AM")]: ' . $objPHPExcel->getActiveSheet()->getCell('B39')->getCalculatedValue() . "\r\n";
 echo 'Value of B40 [=DAY( DATE(2006, 1, 2) )]: ' . $objPHPExcel->getActiveSheet()->getCell('B40')->getCalculatedValue() . "\r\n";
 echo 'Value of B41 [=DAYS360( DATE(2002, 2, 3), DATE(2005, 5, 31) )]: ' . $objPHPExcel->getActiveSheet()->getCell('B41')->getCalculatedValue() . "\r\n";
+
+// Echo memory peak usage
+echo date('H:i:s') . " Peak memory usage: " . (memory_get_peak_usage(true) / 1024 / 1024) . " MB\r\n";
 
 // Echo done
 echo date('H:i:s') . " Done.\r\n";

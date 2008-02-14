@@ -18,9 +18,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel_RichText
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.5.5, 2007-12-24
+ * @version    1.6.0, 2008-02-14
  */
 
 
@@ -39,7 +39,7 @@ require_once 'PHPExcel/Style/Font.php';
  *
  * @category   PHPExcel
  * @package    PHPExcel_RichText
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  */
 class PHPExcel_RichText_Run extends PHPExcel_RichText_TextElement implements PHPExcel_RichText_ITextElement
 {	

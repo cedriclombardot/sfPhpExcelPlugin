@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (c) 2006 - 2007 PHPExcel
+ * Copyright (c) 2006 - 2008 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.5.5, 2007-12-24
+ * @version    1.6.0, 2008-02-14
  */
 
 
@@ -53,7 +53,7 @@ require_once 'PHPExcel/Calculation/FormulaToken.php';
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  */
 class PHPExcel_ReferenceHelper
 {
@@ -246,11 +246,18 @@ class PHPExcel_ReferenceHelper
 			$pSheet->setAutoFilter( $this->updateCellReference($pSheet->getAutoFilter(), $pBefore, $pNumCols, $pNumRows) );
 		}
 			
+		
 		// Update worksheet: freeze pane
 		if ($pSheet->getFreezePane() != '') {
 			$pSheet->setFreezePane( $this->updateCellReference($pSheet->getFreezePane(), $pBefore, $pNumCols, $pNumRows) );
 		}
-			
+		
+
+		// Page setup
+		if ($pSheet->getPageSetup()->isPrintAreaSet()) {
+			$pSheet->getPageSetup()->setPrintArea( $this->updateCellReference($pSheet->getPageSetup()->getPrintArea(), $pBefore, $pNumCols, $pNumRows) );
+		}
+		
 			
 		// Update worksheet: drawings
 		$aDrawings = $pSheet->getDrawingCollection();
@@ -258,6 +265,18 @@ class PHPExcel_ReferenceHelper
 			$newReference = $this->updateCellReference($objDrawing->getCoordinates(), $pBefore, $pNumCols, $pNumRows);
 			if ($objDrawing->getCoordinates() != $newReference) {
 				$objDrawing->setCoordinates($newReference);
+			}
+		}
+    			
+			
+		// Update workbook: named ranges
+		if (count($pSheet->getParent()->getNamedRanges()) > 0) {
+			foreach ($pSheet->getParent()->getNamedRanges() as $namedRange) {
+				if ($namedRange->getWorksheet()->getHashCode() == $pSheet->getHashCode()) {
+					$namedRange->setRange(
+						$this->updateCellReference($namedRange->getRange(), $pBefore, $pNumCols, $pNumRows)
+					);
+				}
 			}
 		}
     }

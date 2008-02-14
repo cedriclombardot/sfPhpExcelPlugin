@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (c) 2006 - 2007 PHPExcel
+ * Copyright (c) 2006 - 2008 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel_Reader
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.5.5, 2007-12-24
+ * @version    1.6.0, 2008-02-14
  */
 
 
@@ -71,7 +71,7 @@ require_once 'PHPExcel/Shared/String.php';
  *
  * @category   PHPExcel
  * @package    PHPExcel_Reader
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  */
 class PHPExcel_Reader_Excel2007 implements PHPExcel_Reader_IReader
 {
@@ -196,6 +196,7 @@ class PHPExcel_Reader_Excel2007 implements PHPExcel_Reader_IReader
 					}
 
 					$xmlWorkbook = simplexml_load_string($zip->getFromName("{$rel['Target']}"));  //~ http://schemas.openxmlformats.org/spreadsheetml/2006/main");
+					$sheetId = 0;
 					foreach ($xmlWorkbook->sheets->sheet as $eleSheet) {
 						$docSheet = $excel->createSheet();
 						$docSheet->setTitle((string) $eleSheet["name"]);
@@ -233,13 +234,22 @@ class PHPExcel_Reader_Excel2007 implements PHPExcel_Reader_IReader
 									}
 									$docSheet->getColumnDimension(PHPExcel_Cell::stringFromColumnIndex($i))->setWidth(floatval($col["width"]));
 								}
-								
 							}
 						}
 						
 						if (isset($xmlSheet->printOptions) && !$this->_readDataOnly) {
-							if ($xmlSheet->printOptions['gridLines'] && $xmlSheet->printOptions['gridLinesSet']) {
+							if (
+							       ($xmlSheet->printOptions['gridLines'] == 'true' || $xmlSheet->printOptions['gridLines'] == '1') &&
+							       ($xmlSheet->printOptions['gridLinesSet'] == 'true' && $xmlSheet->printOptions['gridLinesSet'] == '1')
+							   ) {
 								$docSheet->setShowGridlines(true);
+							}
+							
+							if ($xmlSheet->printOptions['horizontalCentered']) {
+								$docSheet->getPageSetup()->setHorizontalCentered(true);
+							}
+							if ($xmlSheet->printOptions['verticalCentered']) {
+								$docSheet->getPageSetup()->setVerticalCentered(true);
 							}
 						}
 
@@ -286,6 +296,13 @@ class PHPExcel_Reader_Excel2007 implements PHPExcel_Reader_IReader
 										}
 										
 										break;
+								}
+								
+								// Check for numeric values
+								if (is_numeric($value)) {
+									if ($value == (int)$value) $value = (int)$value;
+									if ($value == (float)$value) $value = (float)$value;
+									if ($value == (double)$value) $value = (double)$value;
 								}
 								
 								if ($value) {
@@ -472,7 +489,13 @@ class PHPExcel_Reader_Excel2007 implements PHPExcel_Reader_IReader
 								foreach ($xmlSheet->hyperlinks->hyperlink as $hyperlink) {
 									// Link url
 									$linkRel = $hyperlink->attributes('http://schemas.openxmlformats.org/officeDocument/2006/relationships');
-									$docSheet->getCell( $hyperlink['ref'] )->getHyperlink()->setUrl( $hyperlinks[ (string)$linkRel['id'] ] );
+									
+									if (isset($linkRel['id'])) {
+										$docSheet->getCell( $hyperlink['ref'] )->getHyperlink()->setUrl( $hyperlinks[ (string)$linkRel['id'] ] );
+									}
+									if (isset($hyperlink['location'])) {
+										$docSheet->getCell( $hyperlink['ref'] )->getHyperlink()->setUrl( 'sheet://' . (string)$hyperlink['location'] );
+									}
 										
 									// Tooltip
 									if (isset($hyperlink['tooltip'])) {
@@ -570,8 +593,68 @@ class PHPExcel_Reader_Excel2007 implements PHPExcel_Reader_IReader
 							}
 						}
 
+						// Loop trough definedNames
+						foreach ($xmlWorkbook->definedNames->definedName as $definedName) {
+							// Extract range
+							$extractedRange = (string)$definedName;
+							if (strpos($extractedRange, '!') !== false) {
+								$extractedRange = substr($extractedRange, strpos($extractedRange, '!') + 1);
+							}
+							$extractedRange = str_replace('$', '', $extractedRange);
+								
+							// Some definedNames are only applicable if we are on the same sheet...
+							if ($definedName['localSheetId'] == $sheetId) {							
+								// Switch on type
+								switch ((string)$definedName['name']) {
+									
+									case '_xlnm._FilterDatabase':								
+										$docSheet->setAutoFilter($extractedRange);
+										break;
+										
+									case '_xlnm.Print_Titles':								
+										// Split $extractedRange
+										$extractedRange = explode(',', $extractedRange);
+										
+										// Set print titles
+										if (isset($extractedRange[0])) {
+											$docSheet->getPageSetup()->setColumnsToRepeatAtLeft( explode(':', $extractedRange[0]) );
+										}
+										if (isset($extractedRange[1])) {
+											$docSheet->getPageSetup()->setRowsToRepeatAtTop( explode(':', $extractedRange[1]) );
+										}
+										
+										break;
+										
+									case '_xlnm.Print_Area':
+										$docSheet->getPageSetup()->setPrintArea($extractedRange);
+										break;
+										
+									default:
+										$excel->addNamedRange( new PHPExcel_NamedRange((string)$definedName['name'], $docSheet, $extractedRange, true) );
+										break;
+								}
+							} else {
+								// "Global" definedNames
+								$locatedSheet = null;
+								$extractedSheetName = '';
+								if (strpos( (string)$definedName, '!' ) !== false) {
+									// Extract sheet name
+									$extractedSheetName = PHPExcel_Worksheet::extractSheetTitle( (string)$definedName );
+									
+									// Locate sheet
+									$locatedSheet = $excel->getSheetByName($extractedSheetName);
+								}
+								
+								if (!is_null($locatedSheet)) {
+									$excel->addNamedRange( new PHPExcel_NamedRange((string)$definedName['name'], $locatedSheet, $extractedRange, false) );
+								}
+							}
+						}
+						
+						// Next sheet id
+						$sheetId++;
 					}
-
+					
 					if (!$this->_readDataOnly) {
 						$excel->setActiveSheetIndex(intval($xmlWorkbook->bookView->workbookView["activeTab"]));
 					}
@@ -646,17 +729,17 @@ class PHPExcel_Reader_Excel2007 implements PHPExcel_Reader_IReader
 		}
 		
 		// alignment
-		if (isset($style->alignmen)) {
+		if (isset($style->alignment)) {
 			$docStyle->getAlignment()->setHorizontal((string) $style->alignment["horizontal"]);
 			$docStyle->getAlignment()->setVertical((string) $style->alignment["vertical"]);
-			
+		
 			$textRotation = 0;
-			if ($style->alignment["textRotation"] <= 90) {
-				$textRotation = $style->alignment["textRotation"];
-			} else if ($style->alignment["textRotation"] > 90) {
-				$textRotation = 90 - $style->alignment["textRotation"];
+			if ((int)$style->alignment["textRotation"] <= 90) {
+				$textRotation = (int)$style->alignment["textRotation"];
+			} else if ((int)$style->alignment["textRotation"] > 90) {
+				$textRotation = 90 - (int)$style->alignment["textRotation"];
 			}
-					
+				
 			$docStyle->getAlignment()->setTextRotation(intval($textRotation));
 			$docStyle->getAlignment()->setWrapText( (string)$style->alignment["wrapText"] == "true" );
 		}

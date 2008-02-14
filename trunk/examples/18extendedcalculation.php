@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (C) 2006 - 2007 PHPExcel
+ * Copyright (C) 2006 - 2008 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.5.5, 2007-12-24
+ * @version    1.6.0, 2008-02-14
  */
 
 /* Modified by Bertrand Zuchuat */
@@ -216,6 +216,9 @@ echo 'Value of C32 [=VAR(C2:C12)]: ' . $objPHPExcel->getActiveSheet()->getCell('
 echo 'Value of C33 [=VARA(C2:C12)]: ' . $objPHPExcel->getActiveSheet()->getCell('C33')->getCalculatedValue() . "\r\n";
 echo 'Value of C34 [=VARP(C2:C12)]: ' . $objPHPExcel->getActiveSheet()->getCell('C34')->getCalculatedValue() . "\r\n";
 echo 'Value of C35 [=VARPA(C2:C12)]: ' . $objPHPExcel->getActiveSheet()->getCell('C35')->getCalculatedValue() . "\r\n";
+
+// Echo memory peak usage
+echo date('H:i:s') . " Peak memory usage: " . (memory_get_peak_usage(true) / 1024 / 1024) . " MB\r\n";
 
 // Echo done
 echo date('H:i:s') . " Done.\r\n";

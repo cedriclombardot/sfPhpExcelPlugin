@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (c) 2006 - 2007 PHPExcel
+ * Copyright (c) 2006 - 2008 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel_Writer_Excel2007
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.5.5, 2007-12-24
+ * @version    1.6.0, 2008-02-14
  */
 
 
@@ -65,7 +65,7 @@ require_once 'PHPExcel/Shared/XMLWriter.php';
  *
  * @category   PHPExcel
  * @package    PHPExcel_Writer_Excel2007
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  */
 class PHPExcel_Writer_Excel2007_Worksheet extends PHPExcel_Writer_Excel2007_WriterPart
 {
@@ -184,6 +184,13 @@ class PHPExcel_Writer_Excel2007_Worksheet extends PHPExcel_Writer_Excel2007_Writ
 			$objWriter->writeAttribute('summaryBelow', 	($pSheet->getShowSummaryBelow() ? '1' : '0'));
 			$objWriter->writeAttribute('summaryRight', 	($pSheet->getShowSummaryRight() ? '1' : '0'));
 			$objWriter->endElement();
+			
+			// pageSetUpPr
+			if (!is_null($pSheet->getPageSetup()->getFitToHeight()) || !is_null($pSheet->getPageSetup()->getFitToWidth())) {
+				$objWriter->startElement('pageSetUpPr');
+				$objWriter->writeAttribute('fitToPage', 	'1');
+				$objWriter->endElement();
+			}
 			
 		$objWriter->endElement();
 	}
@@ -509,15 +516,18 @@ class PHPExcel_Writer_Excel2007_Worksheet extends PHPExcel_Writer_Excel2007_Writ
 				$objWriter->startElement('hyperlink');
 				
 				$objWriter->writeAttribute('ref', 	$hyperlink->getParent()->getCoordinate());
-				$objWriter->writeAttribute('r:id', 	'rId_hyperlink_' . $relationId);
+				if (!$hyperlink->isInternal()) {
+					$objWriter->writeAttribute('r:id', 	'rId_hyperlink_' . $relationId);
+					$relationId++;
+				} else {
+					$objWriter->writeAttribute('location', 	str_replace('sheet://', '', $hyperlink->getUrl()));
+				}
 							
 				if ($hyperlink->getTooltip() != '') {
 					$objWriter->writeAttribute('tooltip', $hyperlink->getTooltip());
 				}
 				
 				$objWriter->endElement();
-				
-				$relationId++;
 			}
 
 			$objWriter->endElement();		
@@ -590,6 +600,14 @@ class PHPExcel_Writer_Excel2007_Worksheet extends PHPExcel_Writer_Excel2007_Writ
 
 		$objWriter->writeAttribute('gridLines', 	($pSheet->getShowGridlines() ? 'true': 'false'));
 		$objWriter->writeAttribute('gridLinesSet', 	'true');
+		
+		if ($pSheet->getPageSetup()->getHorizontalCentered()) {
+			$objWriter->writeAttribute('horizontalCentered', 'true');
+		}
+		
+		if ($pSheet->getPageSetup()->getVerticalCentered()) {
+			$objWriter->writeAttribute('verticalCentered', 'true');
+		}
 		
 		$objWriter->endElement();
 	}
@@ -861,6 +879,15 @@ class PHPExcel_Writer_Excel2007_Worksheet extends PHPExcel_Writer_Excel2007_Writ
 						$objWriter->writeAttribute('t', $mappedType);
 						break;
 					case 'f': 			// Formula
+						$calculatedValue = null;
+						if ($this->getParentWriter()->getPreCalculateFormulas()) {
+							$calculatedValue = $pCell->getCalculatedValue();
+						} else {
+							$calculatedValue = $pCell->getValue();
+						}
+						if (is_string($calculatedValue)) {
+							$objWriter->writeAttribute('t', 'str');
+						}
 						break;
 				}
 

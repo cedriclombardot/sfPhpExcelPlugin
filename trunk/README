@@ -35,6 +35,6 @@ sfPhpExcelPlugin work work with [http://www.phpexcel.net PHPExcel]
 
 == Changelog ==
 
-=== 1.0 ===
- * PHPExcel version 1.5.5
+=== TRUNK ===
+ * PHPExcel version 1.6.0
  * Modified examples for work with symfony

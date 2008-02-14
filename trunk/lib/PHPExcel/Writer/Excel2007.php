@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (c) 2006 - 2007 PHPExcel
+ * Copyright (c) 2006 - 2008 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel_Writer
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.5.5, 2007-12-24
+ * @version    1.6.0, 2008-02-14
  */
 
 
@@ -86,7 +86,7 @@ require_once 'PHPExcel/Writer/Excel2007/Comments.php';
  *
  * @category   PHPExcel
  * @package    PHPExcel_Writer
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  */
 class PHPExcel_Writer_Excel2007 implements PHPExcel_Writer_IWriter
 {	
@@ -245,6 +245,15 @@ class PHPExcel_Writer_Excel2007 implements PHPExcel_Writer_IWriter
 	public function save($pFilename = null)
 	{
 		if (!is_null($this->_spreadSheet)) {
+			// If $pFilename is php://output or php://stdout, make it a temporary file...
+			$originalFilename = $pFilename;
+			if (strtolower($pFilename) == 'php://output' || strtolower($pFilename) == 'php://stdout') {
+				$pFilename = @tempnam('./', 'phpxl');
+				if ($pFilename == '') {
+					$pFilename = $originalFilename;
+				}
+			}
+			
 			// Create string lookup table
 			$this->_stringTable = array();
 			for ($i = 0; $i < $this->_spreadSheet->getSheetCount(); $i++) {
@@ -302,11 +311,7 @@ class PHPExcel_Writer_Excel2007 implements PHPExcel_Writer_IWriter
 			for ($i = 0; $i < $this->_spreadSheet->getSheetCount(); $i++) {
 				
 				// Add relationships
-				if ($this->_spreadSheet->getSheet($i)->getDrawingCollection()->count() > 0) {
-					// Worksheet relationships
-					$objZip->addFromString('xl/worksheets/_rels/sheet' . ($i + 1) . '.xml.rels', 	$this->getWriterPart('Rels')->writeWorksheetRelationships($this->_spreadSheet->getSheet($i), ($i + 1)));
-				}
-				
+				$objZip->addFromString('xl/worksheets/_rels/sheet' . ($i + 1) . '.xml.rels', 	$this->getWriterPart('Rels')->writeWorksheetRelationships($this->_spreadSheet->getSheet($i), ($i + 1)));
 				
 				// Add drawing relationship parts
 				if ($this->_spreadSheet->getSheet($i)->getDrawingCollection()->count() > 0) {
@@ -340,6 +345,14 @@ class PHPExcel_Writer_Excel2007 implements PHPExcel_Writer_IWriter
 			// Close file
 			if ($objZip->close() === false) {
 				throw new Exception("Could not close zip file $pFilename.");
+			}
+			
+			// If a temporary file was used, copy it to the correct file stream
+			if ($originalFilename != $pFilename) {
+				if (copy($pFilename, $originalFilename) === false) {
+					throw new Exception("Could not copy temporary zip file $pFilename to $originalFilename.");
+				}
+				@unlink($pFilename);
 			}
 		} else {
 			throw new Exception("PHPExcel object unassigned.");

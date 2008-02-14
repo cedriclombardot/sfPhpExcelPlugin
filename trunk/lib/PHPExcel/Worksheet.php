@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (c) 2006 - 2007 PHPExcel
+ * Copyright (c) 2006 - 2008 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.5.5, 2007-12-24
+ * @version    1.6.0, 2008-02-14
  */
 
 
@@ -83,7 +83,7 @@ require_once 'PHPExcel/ReferenceHelper.php';
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  */
 class PHPExcel_Worksheet implements PHPExcel_IComparable
 {
@@ -391,6 +391,11 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
      */
     public function setTitle($pValue = 'Worksheet')
     {
+    	// Is this a 'rename' or not?
+    	if ($this->getTitle() == $pValue) {
+    		return;
+    	}
+    	
     	// Loop trough all sheets in parent PHPExcel and verify unique names
     	$titleCount	= 0;
     	$aNames 	= $this->getParent()->getSheetNames();
@@ -541,9 +546,6 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
      */
     public function setCellValue($pCoordinate = 'A1', $pValue = null)
     {
-    	// Uppercase coordinate
-    	$pCoordinate = strtoupper($pCoordinate);
-    	
     	// Set value
     	$this->getCell($pCoordinate)->setValue($pValue, true);
     }
@@ -569,9 +571,6 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
      */
     public function setCellValueExplicit($pCoordinate = 'A1', $pValue = null, $pDataType = PHPExcel_Cell_DataType::TYPE_STRING)
     {
-    	// Uppercase coordinate
-    	$pCoordinate = strtoupper($pCoordinate);
-    	
     	// Set value
     	$this->getCell($pCoordinate)->setValueExplicit($pValue, $pDataType);
     }
@@ -598,6 +597,25 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
      */
     public function getCell($pCoordinate = 'A1')
     {
+    	// Worksheet reference?
+		if (strpos($pCoordinate, '!') !== false) {
+			$worksheetReference = PHPExcel_Worksheet::extractSheetTitle($pCoordinate, true);
+			return $this->getParent()->getSheetByName($worksheetReference[0])->getCell($worksheetReference[1]);
+		}
+			
+		// Named range?
+		$namedRange = PHPExcel_NamedRange::resolveRange($pCoordinate, $this);
+		if (!is_null($namedRange)) {
+			$pCoordinate = $namedRange->getRange();
+			if ($this->getHashCode() != $namedRange->getWorksheet()->getHashCode()) {
+				if (!$namedRange->getLocalOnly()) {
+					return $namedRange->getWorksheet()->getCell($pCoordinate);
+				} else {
+					throw new Exception('Named range ' . $namedRange->getName() . ' is not accessible from within sheet ' . $this->getTitle());
+				}
+			}
+		}
+		
     	// Uppercase coordinate
     	$pCoordinate = strtoupper($pCoordinate);
     	
@@ -691,6 +709,17 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
     {
     	return $this->_styles;
     }
+
+    /**
+     * Get default style
+     *
+     * @return 	PHPExcel_Style
+     * @throws 	Exception
+     */
+    public function getDefaultStyle()
+    {
+    	return $this->_styles['default'];
+    }
     
     /**
      * Get style for cell
@@ -701,6 +730,25 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
      */
     public function getStyle($pCellCoordinate = 'A1')
     {
+        // Worksheet reference?
+		if (strpos($pCellCoordinate, '!') !== false) {
+			$worksheetReference = PHPExcel_Worksheet::extractSheetTitle($pCellCoordinate, true);
+			return $this->getParent()->getSheetByName($worksheetReference[0])->getStyle($worksheetReference[1]);
+		}
+		
+		// Named range?
+		$namedRange = PHPExcel_NamedRange::resolveRange($pCellCoordinate, $this);
+		if (!is_null($namedRange)) {
+			$pCoordinate = $namedRange->getRange();
+			if ($this->getHashCode() != $namedRange->getWorksheet()->getHashCode()) {
+				if (!$namedRange->getLocalOnly()) {
+					return $namedRange->getWorksheet()->getStyle($pCellCoordinate);
+				} else {
+					throw new Exception('Named range ' . $namedRange->getName() . ' is not accessible from within sheet ' . $this->getTitle());
+				}
+			}
+		}
+		
     	// Uppercase coordinate
     	$pCellCoordinate = strtoupper($pCellCoordinate);
     	
@@ -721,7 +769,7 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
     		if (isset($this->_styles[$pCellCoordinate])) {
     			return $this->_styles[$pCellCoordinate];
     		} else {
-    			$newStyle = new PHPExcel_Style();
+    			$newStyle = clone $this->getDefaultStyle();
     			$this->_styles[$pCellCoordinate] = $newStyle;
     			return $newStyle;
     		}
@@ -1357,6 +1405,33 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
     	);
     }
         
+    /**
+     * Extract worksheet title from range.
+     * 
+     * Example: extractSheetTitle('test!A1') ==> 'test'
+     * Example: extractSheetTitle('test!A1', true) ==> array('test', 'A1');
+     *
+     * @param string $pRange	Range to extract title from
+     * @param bool $returnRange	Return range? (see example)
+     * @return mixed
+     */
+    public static function extractSheetTitle($pRange, $returnRange = false) {
+    	// Sheet title included?
+    	if (strpos($pRange, '!') === false) {
+    		return '';
+    	}
+    	
+    	// Extract sheet title
+    	$reference = explode('!', $pRange);
+    	$reference[0] = str_replace("'", "", $reference[0]);
+    	
+    	if ($returnRange) {
+    		return $reference;
+    	} else {
+    		return $reference[1];
+    	}
+    }
+    
 	/**
 	 * Implement PHP __clone to create a deep clone, not just a shallow copy.
 	 */

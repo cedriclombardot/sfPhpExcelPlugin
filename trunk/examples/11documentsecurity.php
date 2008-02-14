@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (C) 2006 - 2007 PHPExcel
+ * Copyright (C) 2006 - 2008 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.5.5, 2007-12-24
+ * @version    1.6.0, 2008-02-14
  */
 
 /* Modified by Bertrand Zuchuat */
@@ -80,6 +80,9 @@ $objPHPExcel->setActiveSheetIndex(0);
 echo date('H:i:s') . " Write to Excel2007 format\n";
 $objWriter = new PHPExcel_Writer_Excel2007($objPHPExcel);
 $objWriter->save(str_replace('.php', '.xlsx', __FILE__));
+
+// Echo memory peak usage
+echo date('H:i:s') . " Peak memory usage: " . (memory_get_peak_usage(true) / 1024 / 1024) . " MB\r\n";
 
 // Echo done
 echo date('H:i:s') . " Done writing file.\r\n";

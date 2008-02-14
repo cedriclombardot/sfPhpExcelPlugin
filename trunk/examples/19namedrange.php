@@ -32,7 +32,6 @@ require_once 'symfony.inc.php';
 echo date('H:i:s') . " Create new PHPExcel object\n";
 $objPHPExcel = new sfPhpExcel();
 
-
 // Set properties
 echo date('H:i:s') . " Set properties\n";
 $objPHPExcel->getProperties()->setCreator("Maarten Balliauw");
@@ -44,46 +43,53 @@ $objPHPExcel->getProperties()->setKeywords("office 2007 openxml php");
 $objPHPExcel->getProperties()->setCategory("Test result file");
 
 
-// Create a first sheet
-echo date('H:i:s') . " Add data\n";
+// Add some data
+echo date('H:i:s') . " Add some data\n";
 $objPHPExcel->setActiveSheetIndex(0);
-$objPHPExcel->getActiveSheet()->setCellValue('A1', "Cell B3 and B5 contain data validation...");
-$objPHPExcel->getActiveSheet()->setCellValue('A3', "Number:");
-$objPHPExcel->getActiveSheet()->setCellValue('B3', "10");
-$objPHPExcel->getActiveSheet()->setCellValue('A5', "List:");
-$objPHPExcel->getActiveSheet()->setCellValue('B5', "Item A");
+$objPHPExcel->getActiveSheet()->setCellValue('A1', 'Firstname:');
+$objPHPExcel->getActiveSheet()->setCellValue('A2', 'Lastname:');
+$objPHPExcel->getActiveSheet()->setCellValue('A3', 'Fullname:');
+$objPHPExcel->getActiveSheet()->setCellValue('B1', 'Maarten');
+$objPHPExcel->getActiveSheet()->setCellValue('B2', 'Balliauw');
+$objPHPExcel->getActiveSheet()->setCellValue('B3', '=B1 & " " & B2');
+
+// Define named ranges
+echo date('H:i:s') . " Define named ranges\n";
+$objPHPExcel->addNamedRange( new PHPExcel_NamedRange('PersonName', $objPHPExcel->getActiveSheet(), 'B1') );
+$objPHPExcel->addNamedRange( new PHPExcel_NamedRange('PersonLN', $objPHPExcel->getActiveSheet(), 'B2') );
+
+// Rename named ranges
+echo date('H:i:s') . " Rename named ranges\n";
+$objPHPExcel->getNamedRange('PersonName')->setName('PersonFN');
+
+// Rename sheet
+echo date('H:i:s') . " Rename sheet\n";
+$objPHPExcel->getActiveSheet()->setTitle('Person');
 
 
-// Set data validation
-echo date('H:i:s') . " Set data validation\n";
-$objValidation = $objPHPExcel->getActiveSheet()->getCell('B3')->getDataValidation();
-$objValidation->setType( PHPExcel_Cell_DataValidation::TYPE_WHOLE );
-$objValidation->setErrorStyle( PHPExcel_Cell_DataValidation::STYLE_STOP );
-$objValidation->setAllowBlank(true);
-$objValidation->setShowInputMessage(true);
-$objValidation->setShowErrorMessage(true);
-$objValidation->setErrorTitle('Input error');
-$objValidation->setError('Number is not allowed!');
-$objValidation->setPromptTitle('Allowed input');
-$objValidation->setPrompt('Only numbers between 10 and 20 are allowed.');
-$objValidation->setFormula1(10);
-$objValidation->setFormula2(20);
-$objPHPExcel->getActiveSheet()->getCell('B3')->setDataValidation($objValidation);
+// Create a new worksheet, after the default sheet
+echo date('H:i:s') . " Create new Worksheet object\n";
+$objPHPExcel->createSheet();
 
-$objValidation = $objPHPExcel->getActiveSheet()->getCell('B5')->getDataValidation();
-$objValidation->setType( PHPExcel_Cell_DataValidation::TYPE_LIST );
-$objValidation->setErrorStyle( PHPExcel_Cell_DataValidation::STYLE_INFORMATION );
-$objValidation->setAllowBlank(false);
-$objValidation->setShowInputMessage(true);
-$objValidation->setShowErrorMessage(true);
-$objValidation->setShowDropDown(true);
-$objValidation->setErrorTitle('Input error');
-$objValidation->setError('Value is not in list.');
-$objValidation->setPromptTitle('Pick from list');
-$objValidation->setPrompt('Please pick a value from the drop-down list.');
-$objValidation->setFormula1('"Item A,Item B,Item C"');	// Make sure to put the list items between " and "  !!!
-$objPHPExcel->getActiveSheet()->getCell('B5')->setDataValidation($objValidation);
+// Add some data to the second sheet, resembling some different data types
+echo date('H:i:s') . " Add some data\n";
+$objPHPExcel->setActiveSheetIndex(1);
+$objPHPExcel->getActiveSheet()->setCellValue('A1', 'Firstname:');
+$objPHPExcel->getActiveSheet()->setCellValue('A2', 'Lastname:');
+$objPHPExcel->getActiveSheet()->setCellValue('A3', 'Fullname:');
+$objPHPExcel->getActiveSheet()->setCellValue('B1', '=PersonFN');
+$objPHPExcel->getActiveSheet()->setCellValue('B2', '=PersonLN');
+$objPHPExcel->getActiveSheet()->setCellValue('B3', '=PersonFN & " " & PersonLN');
 
+// Resolve range
+echo date('H:i:s') . " Resolve range\n";
+echo 'Cell B1 {=PersonFN}: ' . $objPHPExcel->getActiveSheet()->getCell('B1')->getCalculatedValue() . "\n";
+echo 'Cell B3 {=PersonFN & " " & PersonLN}: ' . $objPHPExcel->getActiveSheet()->getCell('B3')->getCalculatedValue() . "\n";
+echo 'Cell Person!B1: ' . $objPHPExcel->getActiveSheet()->getCell('Person!B1')->getCalculatedValue() . "\n";
+
+// Rename sheet
+echo date('H:i:s') . " Rename sheet\n";
+$objPHPExcel->getActiveSheet()->setTitle('Person (cloned)');
 
 // Set active sheet index to the first sheet, so Excel opens this as the first sheet
 $objPHPExcel->setActiveSheetIndex(0);
@@ -93,7 +99,6 @@ $objPHPExcel->setActiveSheetIndex(0);
 echo date('H:i:s') . " Write to Excel2007 format\n";
 $objWriter = new PHPExcel_Writer_Excel2007($objPHPExcel);
 $objWriter->save(str_replace('.php', '.xlsx', __FILE__));
-
 
 // Echo memory peak usage
 echo date('H:i:s') . " Peak memory usage: " . (memory_get_peak_usage(true) / 1024 / 1024) . " MB\r\n";

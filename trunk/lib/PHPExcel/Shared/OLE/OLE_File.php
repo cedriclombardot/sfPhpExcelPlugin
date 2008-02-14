@@ -86,7 +86,7 @@ class PHPExcel_Shared_OLE_PPS_File extends PHPExcel_Shared_OLE_PPS
     {
         $this->_tmp_filename = tempnam($this->_tmp_dir, "OLE_PPS_File");
         $fh = @fopen($this->_tmp_filename, "w+b");
-        if ($fh == false) {
+        if ($fh === false) {
             throw new Exception("Can't create temporary file");
         }
         $this->_PPS_FILE = $fh;

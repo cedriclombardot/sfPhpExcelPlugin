@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (C) 2006 - 2007 PHPExcel
+ * Copyright (C) 2006 - 2008 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.5.5, 2007-12-24
+ * @version    1.6.0, 2008-02-14
  */
 
 /* Modified by Bertrand Zuchuat */
@@ -42,6 +42,10 @@ $objPHPExcel->getProperties()->setDescription("Test document for Office 2007 XLS
 $objPHPExcel->getProperties()->setKeywords("office 2007 openxml php");
 $objPHPExcel->getProperties()->setCategory("Test result file");
 
+// Set default font
+echo date('H:i:s') . " Set default font\n";
+$objPHPExcel->getActiveSheet()->getDefaultStyle()->getFont()->setName('Arial');
+$objPHPExcel->getActiveSheet()->getDefaultStyle()->getFont()->setSize(10);
 
 // Add some data, resembling some different data types
 echo date('H:i:s') . " Add some data\n";
@@ -63,6 +67,9 @@ $objPHPExcel->setActiveSheetIndex(0);
 echo date('H:i:s') . " Write to Excel2007 format\n";
 $objWriter = new PHPExcel_Writer_Excel2007($objPHPExcel);
 $objWriter->save(str_replace('.php', '.xlsx', __FILE__));
+
+// Echo memory peak usage
+echo date('H:i:s') . " Peak memory usage: " . (memory_get_peak_usage(true) / 1024 / 1024) . " MB\r\n";
 
 // Echo done
 echo date('H:i:s') . " Done writing file.\r\n";

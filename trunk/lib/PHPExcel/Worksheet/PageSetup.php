@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (c) 2006 - 2007 PHPExcel
+ * Copyright (c) 2006 - 2008 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel_Worksheet
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.5.5, 2007-12-24
+ * @version    1.6.0, 2008-02-14
  */
 
 
@@ -102,7 +102,7 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel_Worksheet
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  */
 class PHPExcel_Worksheet_PageSetup
 {		
@@ -233,6 +233,27 @@ class PHPExcel_Worksheet_PageSetup
 	 */
 	private $_rowsToRepeatAtTop = array(0, 0);
 	
+	/**
+	 * Center page horizontally
+	 *
+	 * @var boolean
+	 */
+	private $_horizontalCentered = false;
+	
+	/**
+	 * Center page vertically
+	 *
+	 * @var boolean
+	 */
+	private $_verticalCentered = false;
+	
+	/**
+	 * Print area
+	 *
+	 * @var string
+	 */
+	private $_printArea = null;
+	
     /**
      * Create a new PHPExcel_Worksheet_PageSetup
      */
@@ -246,6 +267,9 @@ class PHPExcel_Worksheet_PageSetup
     	$this->_fitToWidth				= null;
     	$this->_columnsToRepeatAtLeft 	= array('', '');
     	$this->_rowsToRepeatAtTop		= array(0, 0);
+    	$this->_horizontalCentered		= false;
+    	$this->_verticalCentered		= false;
+    	$this->_printArea				= null;
     }
     
     /**
@@ -303,7 +327,7 @@ class PHPExcel_Worksheet_PageSetup
 	 * @throws 	Exception
 	 */
 	public function setScale($pValue = 100) {
-		if ($pValue >= 10 && $pValue <= 400) {
+		if (($pValue >= 10 && $pValue <= 400) || is_null($pValue)) {
 			$this->_scale = $pValue;
 		} else {
 			throw new Exception("Valid scale is between 10 and 400.");
@@ -439,6 +463,89 @@ class PHPExcel_Worksheet_PageSetup
 	public function setRowsToRepeatAtTopByStartAndEnd($pStart = 1, $pEnd = 1) {
 		$this->_rowsToRepeatAtTop = array($pStart, $pEnd);
 	}
+	
+	/**
+	 * Get center page horizontally
+	 *
+	 * @return bool
+	 */
+	public function getHorizontalCentered() {
+		return $this->_horizontalCentered;
+	}
+	
+	/**
+	 * Set center page horizontally
+	 *
+	 * @param bool $value
+	 */
+	public function setHorizontalCentered($value = false) {
+		$this->_horizontalCentered = $value;
+	}
+	
+	/**
+	 * Get center page vertically
+	 *
+	 * @return bool
+	 */
+	public function getVerticalCentered() {
+		return $this->_verticalCentered;
+	}
+	
+	/**
+	 * Set center page vertically
+	 *
+	 * @param bool $value
+	 */
+	public function setVerticalCentered($value = false) {
+		$this->_verticalCentered = $value;
+	}
+	
+	/**
+	 * Get print area
+	 *
+	 * @return string
+	 */
+	public function getPrintArea() {
+		return $this->_printArea;
+	}
+	
+	/**
+	 * Is print area set?
+	 *
+	 * @return boolean
+	 */
+	public function isPrintAreaSet() {
+		return !is_null($this->_printArea);
+	}
+	
+	/**
+	 * Set print area
+	 *
+	 * @param string $value
+	 * @throws Exception
+	 */
+	public function setPrintArea($value) {
+    	if (!eregi(':', $value)) {
+    		throw new Exception('Cell coordinate must be a range of cells.');
+    	} else if (eregi('\$', $value)) {
+    		throw new Exception('Cell coordinate must not be absolute.');
+    	} else {
+			$this->_printArea = strtoupper($value);
+    	}
+	}
+	
+	/**
+	 * Set print area
+	 *
+	 * @param int $column1		Column 1
+	 * @param int $row1			Row 1
+	 * @param int $column2		Column 2
+	 * @param int $row2			Row 2
+	 */
+    public function setPrintAreaByColumnAndRow($column1, $row1, $column2, $row2)
+    {
+    	$this->setPrintArea(PHPExcel_Cell::stringFromColumnIndex($column1) . $row1 . ':' . PHPExcel_Cell::stringFromColumnIndex($column2) . $row2);
+    }
         
 	/**
 	 * Implement PHP __clone to create a deep clone, not just a shallow copy.

@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (c) 2006 - 2007 PHPExcel
+ * Copyright (c) 2006 - 2008 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.5.5, 2007-12-24
+ * @version    1.6.0, 2008-02-14
  */
 
 
@@ -41,13 +41,16 @@ require_once 'PHPExcel/Worksheet.php';
 /** PHPExcel_Shared_ZipStreamWrapper */
 require_once 'PHPExcel/Shared/ZipStreamWrapper.php';
 
+/** PHPExcel_NamedRange */
+require_once 'PHPExcel/NamedRange.php';
+
 
 /**
  * PHPExcel
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  */
 class PHPExcel
 {
@@ -80,6 +83,13 @@ class PHPExcel
 	private $_activeSheetIndex = 0;
 	
 	/**
+	 * Named ranges
+	 *
+	 * @var PHPExcel_NamedRange[]
+	 */
+	private $_namedRanges = array();
+	
+	/**
 	 * Create a new PHPExcel with one Worksheet
 	 */
 	public function __construct()
@@ -94,6 +104,9 @@ class PHPExcel
 		
 		// Create document security
 		$this->_security = new PHPExcel_DocumentSecurity();
+		
+		// Set named ranges
+		$this->_namedRanges = array();
 	}
 	
 	/**
@@ -189,7 +202,7 @@ class PHPExcel
 	/**
 	 * Get sheet by index
 	 *
-	 * @param int $pIndex Active sheet index
+	 * @param int $pIndex Sheet index
 	 * @return PHPExcel_Worksheet
 	 * @throws Exception
 	 */
@@ -200,6 +213,24 @@ class PHPExcel
 		} else {
 			return $this->_workSheetCollection[$pIndex];
 		}
+	}
+	
+	/**
+	 * Get sheet by name
+	 *
+	 * @param string $pName Sheet name
+	 * @return PHPExcel_Worksheet
+	 * @throws Exception
+	 */
+	public function getSheetByName($pName = '')
+	{
+		for ($i = 0; $i < count($this->_workSheetCollection); $i++) {
+			if ($this->_workSheetCollection[$i]->getTitle() == $pName) {
+				return $this->_workSheetCollection[$i];
+			}
+		}
+		
+		return null;
 	}
 	
 	/**
@@ -266,6 +297,48 @@ class PHPExcel
 		}
 		
 		return $returnValue;
+	}
+	
+	/**
+	 * Get named ranges
+	 *
+	 * @return PHPExcel_NamedRange[]
+	 */
+	public function getNamedRanges() {
+		return $this->_namedRanges;
+	}
+	
+	/**
+	 * Add named range
+	 *
+	 * @param PHPExcel_NamedRange $namedRange
+	 */
+	public function addNamedRange(PHPExcel_NamedRange $namedRange) {
+		$this->_namedRanges[$namedRange->getName()] = $namedRange;
+	}
+	
+	/**
+	 * Get named range
+	 *
+	 * @param string $namedRange
+	 */
+	public function getNamedRange($namedRange) {
+		if ($namedRange != '' && !is_null($namedRange) && @isset($this->_namedRanges[$namedRange])) {
+			return $this->_namedRanges[$namedRange];
+		}
+		
+		return null;
+	}
+	
+	/**
+	 * Remove named range
+	 *
+	 * @param string $namedRange
+	 */
+	public function removeNamedRange($namedRange) {
+		if ($namedRange != '' && !is_null($namedRange) && @isset($this->_namedRanges[$namedRange])) {
+			unset($this->_namedRanges[$namedRange]);
+		}
 	}
 	    
 	/**

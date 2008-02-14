@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (c) 2006 - 2007 PHPExcel
+ * Copyright (c) 2006 - 2008 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel_Writer
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.5.5, 2007-12-24
+ * @version    1.6.0, 2008-02-14
  */
 
 
@@ -44,7 +44,7 @@ require_once 'PHPExcel/RichText.php';
  *
  * @category   PHPExcel
  * @package    PHPExcel_Writer
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  */
 class PHPExcel_Writer_Excel5 implements PHPExcel_Writer_IWriter {
 	/**
@@ -193,7 +193,7 @@ class PHPExcel_Writer_Excel5 implements PHPExcel_Writer_IWriter {
 				} else {
 					// Hyperlink?
 					if ($cell->hasHyperlink()) {
-						$worksheet->writeUrl($row, $column, $cell->getHyperlink()->getUrl(), $cell->getValue(), $formats[$styleHash]);
+						$worksheet->writeUrl($row, $column, str_replace('sheet://', 'internal:', $cell->getHyperlink()->getUrl()), $cell->getValue(), $formats[$styleHash]);
 					} else {
 						$worksheet->write($row, $column, $cell->getValue(), $formats[$styleHash]);
 					}
@@ -243,6 +243,24 @@ class PHPExcel_Writer_Excel5 implements PHPExcel_Writer_IWriter {
 			$worksheet->setMarginRight($phpSheet->getPageMargins()->getRight());
 			$worksheet->setMarginTop($phpSheet->getPageMargins()->getTop());
 			$worksheet->setMarginBottom($phpSheet->getPageMargins()->getBottom());
+			
+			// -------------------------------------------------------------------
+			// Commented due to bug:
+			// http://pear.php.net/bugs/bug.php?id=2146
+			// -------------------------------------------------------------------
+			// if ($phpSheet->getPageSetup()->isPrintAreaSet()) {
+			// 	// Print area
+			// 	$printArea = PHPExcel_Cell::splitRange($phpSheet->getPageSetup()->getPrintArea());
+			// 	$printArea[0] = PHPExcel_Cell::coordinateFromString($printArea[0]);
+			// 	$printArea[1] = PHPExcel_Cell::coordinateFromString($printArea[1]);
+			// 
+			// 	$worksheet->printArea(
+			// 		$printArea[0][1],
+			// 		PHPExcel_Cell::columnIndexFromString($printArea[0][0]) - 1,
+			// 		$printArea[1][1],
+			// 		PHPExcel_Cell::columnIndexFromString($printArea[1][0]) - 1
+			// 	);
+			// }
 			
 		}
 		

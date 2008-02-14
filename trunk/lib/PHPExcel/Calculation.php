@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (c) 2006 - 2007 PHPExcel
+ * Copyright (c) 2006 - 2008 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.5.5, 2007-12-24
+ * @version    1.6.0, 2008-02-14
  */
 
 
@@ -34,6 +34,9 @@ require_once 'PHPExcel/Cell.php';
 
 /** PHPExcel_Cell_DataType */
 require_once 'PHPExcel/Cell/DataType.php';
+
+/** PHPExcel_NamedRange */
+require_once 'PHPExcel/NamedRange.php';
 
 /** PHPExcel_Calculation_FormulaParser */
 require_once 'PHPExcel/Calculation/FormulaParser.php';
@@ -53,7 +56,7 @@ require_once 'PHPExcel/Calculation/Function.php';
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2007 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  */
 class PHPExcel_Calculation
 {
@@ -499,11 +502,17 @@ class PHPExcel_Calculation
 				 (!$inFunction) ) {
 				 	// Adjust reference
 				 	$reference = str_replace('$', '', $token->getValue());
-
+		 	
+				 	// Get value
+				 	$calculatedValue = $pCell->getParent()->getCell( $reference )->getCalculatedValue();
+				 	if (is_string($calculatedValue)) {
+				 		$calculatedValue = '"' . $calculatedValue . '"';
+				 	}
+				 	
 				 	// Add to executable formula array
 				 	array_push(
 				 		$executableFormulaArray,
-				 		$pCell->getParent()->getCell( $reference )->getCalculatedValue()
+				 		$calculatedValue
 				 	);
 
 				 	continue;
@@ -642,7 +651,7 @@ class PHPExcel_Calculation
 
 		// Evaluate formula
 		try {
-			$formula = implode('', $executableFormulaArray);
+			$formula = implode(' ', $executableFormulaArray);
 			$formula = str_replace('(,', '(null,', $formula);
 			$formula = str_replace(',,', ',null,', $formula);
 			$formula = str_replace(',)', ',null)', $formula);
@@ -693,7 +702,7 @@ class PHPExcel_Calculation
 	 *
 	 * @param 	string				$pRange		String based range representation
 	 * @param 	PHPExcel_Worksheet	$pSheet		Worksheet
-	 * @return  array				Array of values in range
+	 * @return  mixed				Array of values in range if range contains more than one element. Otherwise, a single value is returned.
 	 * @throws 	Exception
 	 */
 	public function extractRange($pRange = 'A1', PHPExcel_Worksheet $pSheet = null) {
@@ -702,6 +711,26 @@ class PHPExcel_Calculation
 
 		// Worksheet given?
 		if (!is_null($pSheet)) {
+			// Worksheet reference?
+			if (strpos($pRange, '!') !== false) {
+				$worksheetReference = PHPExcel_Worksheet::extractSheetTitle($pRange, true);
+				$pSheet = $pSheet->getParent()->getSheetByName($worksheetReference[0]);
+				$pRange = $worksheetReference[1];
+			}
+			
+			// Named range?
+			$namedRange = PHPExcel_NamedRange::resolveRange($pRange, $pSheet);
+			if (!is_null($namedRange)) {
+				$pRange = $namedRange->getRange();
+				if ($pSheet->getHashCode() != $namedRange->getWorksheet()->getHashCode()) {
+					if (!$namedRange->getLocalOnly()) {
+						$pSheet = $namedRange->getWorksheet();
+					} else {
+						return '';
+					}
+				}
+			}
+			
 			// Extract range
 			$aReferences = PHPExcel_Cell::extractAllCellReferencesInRange($pRange);
 
@@ -717,6 +746,11 @@ class PHPExcel_Calculation
 		}
 
 		// Return
+		if (strpos($pRange, ':') === false) {
+			while (is_array($returnValue)) {
+				$returnValue = array_pop($returnValue);
+			}
+		}
 		return $returnValue;
 	}
 
