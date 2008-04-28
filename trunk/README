@@ -1,6 +1,6 @@
 = sfPhpExcel plugin =
 
-sfPhpExcelPlugin work work with [http://www.phpexcel.net PHPExcel]
+sfPhpExcelPlugin work with [http://www.phpexcel.net PHPExcel]. It can generate MS Excel files version 5 and 2007.
 
 == Installation ==
 
@@ -36,5 +36,5 @@ sfPhpExcelPlugin work work with [http://www.phpexcel.net PHPExcel]
 == Changelog ==
 
 === TRUNK ===
- * PHPExcel version 1.6.0
- * Modified examples for work with symfony
+ * PHPExcel version 1.6.1
+ * Modification of examples to work with symfony
