@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel_Worksheet
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
 
 
@@ -196,6 +196,7 @@ class PHPExcel_Worksheet_BaseDrawing implements PHPExcel_IComparable
     	if (is_null($this->_worksheet)) {
     		// Add drawing to PHPExcel_Worksheet
 	    	$this->_worksheet = $pValue;
+	    	$this->_worksheet->getCell($this->_coordinates);
 	    	$this->_worksheet->getDrawingCollection()->append($this);
     	} else {
     		if ($pOverrideOld) {

@@ -2131,6 +2131,10 @@ class PHPExcel_Writer_Excel5_Worksheet extends PHPExcel_Writer_Excel5_BIFFwriter
         $grbit       = 0x0000;               // Option flags
         $ixfe        = $this->_XF($format);  // XF index
 
+		if ( $height < 0 ){
+			$height = null;
+		}
+
         // set _row_sizes so _sizeRow() can use it
         $this->_row_sizes[$row] = $height;
 

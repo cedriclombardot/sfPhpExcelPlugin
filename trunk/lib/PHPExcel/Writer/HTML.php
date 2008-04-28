@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel_Writer
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
 
 
@@ -72,7 +72,7 @@ class PHPExcel_Writer_HTML implements PHPExcel_Writer_IWriter {
 	private $_preCalculateFormulas = true;
 	
 	/**
-	 * Create a new PHPExcel_Writer_Excel5
+	 * Create a new PHPExcel_Writer_HTML
 	 *
 	 * @param 	PHPExcel	$phpExcel	PHPExcel object
 	 */
@@ -100,44 +100,39 @@ class PHPExcel_Writer_HTML implements PHPExcel_Writer_IWriter {
 		// Get cell collection
 		$cellCollection = $sheet->getCellCollection();
 		
-		// Get column count
-		$colCount = PHPExcel_Cell::columnIndexFromString($sheet->getHighestColumn());
 
 		// Write headers
 		$this->_writeHTMLHeader($fileHandle);
 		$this->_writeStyles($fileHandle, $sheet);
 		$this->_writeTableHeader($fileHandle);
 		
-		// Loop trough cells
-		$currentRow = -1;
-		$rowData = array();
-		foreach ($cellCollection as $cell) {
-			if ($currentRow != $cell->getRow()) {
-				// End previous row?
-				if ($currentRow != -1) {
-					$this->_writeRow($fileHandle, $sheet, $rowData, ($currentRow - 1));
-				}
+    	// Get worksheet dimension
+    	$dimension = explode(':', $sheet->calculateWorksheetDimension());
+    	$dimension[0] = PHPExcel_Cell::coordinateFromString($dimension[0]);
+    	$dimension[0][0] = PHPExcel_Cell::columnIndexFromString($dimension[0][0]) - 1;
+    	$dimension[1] = PHPExcel_Cell::coordinateFromString($dimension[1]);
+    	$dimension[1][0] = PHPExcel_Cell::columnIndexFromString($dimension[1][0]) - 1;
 
-				// Set current row
-				$currentRow = $cell->getRow();
+    	// Loop trough cells
+    	$rowData = null;
+    	for ($row = $dimension[0][1]; $row <= $dimension[1][1]; $row++) {
+			// Start a new row
+			$rowData = array();
+						
+			// Loop trough columns
+    		for ($column = $dimension[0][0]; $column <= $dimension[1][0]; $column++) {
+    			// Cell exists?
+    			if ($sheet->cellExistsByColumnAndRow($column, $row)) {
+    				$rowData[$column] = $sheet->getCellByColumnAndRow($column, $row);
+    			} else {
+    				$rowData[$column] = '';
+    			}
+    		}
+
+    		// Write row
+			$this->_writeRow($fileHandle, $sheet, $rowData, $row - 1);
+    	}
 			
-				// Start a new row
-				$rowData = array();
-				for ($i = 0; $i < $colCount; $i++) {
-					$rowData[$i] = '';
-				}
-			}
-					
-			// Copy cell
-			$column = PHPExcel_Cell::columnIndexFromString($cell->getColumn()) - 1;
-			$rowData[$column] = $cell;
-		}
-		
-		// End last row?
-		if ($currentRow != -1) {
-			$this->_writeRow($fileHandle, $sheet, $rowData, ($currentRow - 1));
-		}
-				
 		// Write footers
 		$this->_writeTableFooter($fileHandle);
 		$this->_writeHTMLFooter($fileHandle);
@@ -247,9 +242,9 @@ class PHPExcel_Writer_HTML implements PHPExcel_Writer_IWriter {
 				if ($drawing instanceof PHPExcel_Worksheet_BaseDrawing) {
 					if ($drawing->getCoordinates() == $coordinates) {
 						$filename = $drawing->getPath();
-						
+
 						$html .= "\r\n";
-						$html .= '        <img  style="position: relative; left: ' . $drawing->getOffsetX() . 'px; top: ' . $drawing->getOffsetY() . 'px; width: "' . $drawing->getWidth() . 'px; height=' . $drawing->getHeight() . 'px;" src="' . $filename . '" border="0">' . "\r\n";
+						$html .= '        <img  style="position: relative; left: ' . $drawing->getOffsetX() . 'px; top: ' . $drawing->getOffsetY() . 'px; width: ' . $drawing->getWidth() . 'px; height: ' . $drawing->getHeight() . 'px;" src="' . $filename . '" border="0">' . "\r\n";
 					}
 				}
 			}
@@ -304,7 +299,9 @@ class PHPExcel_Writer_HTML implements PHPExcel_Writer_IWriter {
 			// Calculate row heights
 			foreach ($pSheet->getRowDimensions() as $rowDimension) {
 				$html .= '      tr.row' . ($rowDimension->getRowIndex() - 1)  . ' {' . "\r\n";
-				$html .= '        height: ' . PHPExcel_Shared_Drawing::cellDimensionToPixels($rowDimension->getRowHeight()) . 'px;' . "\r\n";
+				// height is disproportionately large
+				$px_height = round( PHPExcel_Shared_Drawing::cellDimensionToPixels($rowDimension->getRowHeight()) /12 );
+				$html .= '        height: ' . $px_height . 'px;' . "\r\n";
 				if ($rowDimension->getVisible() === false) {
 					$html .= '        display: none;' . "\r\n";
 					$html .= '        visibility: hidden;' . "\r\n";
@@ -627,7 +624,7 @@ class PHPExcel_Writer_HTML implements PHPExcel_Writer_IWriter {
 					
 					// Image?
 					$this->_writeImageInCell($pFileHandle, $pSheet, $cell->getCoordinate());
-					
+
 					// Cell data
 					fwrite($pFileHandle, $cellData);
 					

@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel_Shared
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
 
 
@@ -87,7 +87,7 @@ class PHPExcel_Shared_ZipStreamWrapper {
         $url = @parse_url($path);
         
         // Fix URL
-	if (!is_array($url)) {
+		if (!is_array($url)) {
             $url['host'] = substr($path, strlen('zip://'));
             $url['path'] = '';
         }

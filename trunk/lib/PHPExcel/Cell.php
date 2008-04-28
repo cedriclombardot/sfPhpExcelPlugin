@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
 
 
@@ -363,8 +363,6 @@ class PHPExcel_Cell
     {
     	if (eregi(':', $pCoordinateString)) {
     		throw new Exception('Cell coordinate string can not be a range of cells.');
-    	} else if (eregi('\$', $pCoordinateString)) {
-    		throw new Exception('Cell coordinate string must not be absolute.');
     	} else if ($pCoordinateString == '') {
     		throw new Exception('Cell coordinate can not be zero-length string.');
     	} else {
@@ -374,15 +372,10 @@ class PHPExcel_Cell
 	    	// Row
 	    	$row = '';
 	    	
-	    	// Calculate column
-	    	for ($i = 0; $i < strlen($pCoordinateString); $i++) {
-		    	if (!is_numeric(substr($pCoordinateString, $i, 1))) {
-		    		$column .= strtoupper(substr($pCoordinateString, $i, 1));
-		    	} else {
-		    		$row = substr($pCoordinateString, $i);
-		    		break;
-		    	}
-	    	}
+	        // Convert a cell reference
+	        if (preg_match("/([$]?[A-I]?[A-Z])([$]?\d+)/", $pCoordinateString, $matches)) {
+	            list(, $column, $row) = $matches;
+	        }
 	    	
 	    	// Return array
 	    	return array($column, $row);

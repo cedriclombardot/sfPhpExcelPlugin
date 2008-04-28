@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel_Writer
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
 
 
@@ -261,7 +261,62 @@ class PHPExcel_Writer_Excel5 implements PHPExcel_Writer_IWriter {
 			// 		PHPExcel_Cell::columnIndexFromString($printArea[1][0]) - 1
 			// 	);
 			// }
-			
+		
+ 			// Support for print scale
+ 			if ($phpSheet->getPageSetup()->getScale()) {
+ 			    $worksheet->setPrintScale($phpSheet->getPageSetup()->getScale());
+ 			}
+ 
+ 			// Support for fitting to pages
+ 			if ($phpSheet->getPageSetup()->getFitToWidth()) {
+ 			    if ($phpSheet->getPageSetup()->getFitToHeight()) {
+ 			        // Both properties are set, so use them
+ 			        // Note: This case is double, see below
+ 			        $worksheet->fitToPages($phpSheet->getPageSetup()->getFitToWidth(), $phpSheet->getPageSetup()->getFitToHeight());
+ 			    } else {
+ 			        // Only width given, make assumption about height
+ 			        $height = 0;
+ 			        $worksheet->fitToPages($phpSheet->getPageSetup()->getFitToWidth(), $height);
+ 			    }
+ 			} else if ($phpSheet->getPageSetup()->getFitToHeight()) {
+ 			    if ($phpSheet->getPageSetup()->getFitToWidth()) {
+ 			        // Both properties are set, so use them
+ 			        // Note: This case is double, see below
+ 			        $worksheet->fitToPages($phpSheet->getPageSetup()->getFitToWidth(), $phpSheet->getPageSetup()->getFitToHeight());
+ 			    } else {
+ 			        // Only height given, make assumption about width
+ 			        $width = 0;
+ 			        $worksheet->fitToPages($width, $phpSheet->getPageSetup()->getFitToHeight());
+ 			    }
+ 			}
+ 
+ 			// Support for breaks
+ 			$vBreaks = array();
+ 			$hBreaks = array();
+ 			foreach ($phpSheet->getBreaks() as $cell => $breakType) {
+ 			    // Fetch coordinates
+ 			    $coordinates = PHPExcel_Cell::coordinateFromString($cell);
+ 
+ 			    // Decide what to do by the type of break
+ 			    switch ($breakType) {
+ 			        case PHPExcel_Worksheet::BREAK_COLUMN:
+ 			            // Add to list of vertical breaks
+ 			            $vBreaks[] = $coordinates[0];
+ 			            break;
+ 
+ 		            case PHPExcel_Worksheet::BREAK_ROW:
+ 		                // Add to list of horizontal breaks
+ 		                $hBreaks[] = $coordinates[1];
+ 		                break;
+ 
+ 	                case PHPExcel_Worksheet::BREAK_NONE:
+ 	                default:
+ 	                    // Nothing to do
+ 	                    break;
+ 			    }
+ 			}
+ 			$worksheet->setVPagebreaks($vBreaks);
+ 			$worksheet->setHPagebreaks($hBreaks);			
 		}
 		
 		$workbook->close();

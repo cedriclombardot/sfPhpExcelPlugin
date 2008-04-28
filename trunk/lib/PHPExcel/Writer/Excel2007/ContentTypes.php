@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel_Writer_Excel2007
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
 
 
@@ -155,6 +155,19 @@ class PHPExcel_Writer_Excel2007_ContentTypes extends PHPExcel_Writer_Excel2007_W
 						$this->_writeDefaultContentType(
 							$objWriter, strtolower($this->getParentWriter()->getDrawingHashTable()->getByIndex($i)->getExtension()), $aMediaContentTypes[strtolower($this->getParentWriter()->getDrawingHashTable()->getByIndex($i)->getExtension())]
 						);
+					}
+				}
+			}
+			for ($i = 0; $i < $pPHPExcel->getSheetCount(); $i++) {
+				if (count($pPHPExcel->getSheet()->getHeaderFooter()->getImages()) > 0) {
+					foreach ($pPHPExcel->getSheet()->getHeaderFooter()->getImages() as $image) {
+						if (!isset( $aMediaContentTypes[strtolower($image->getExtension())]) ) {
+							$aMediaContentTypes[strtolower($image->getExtension())] = $this->_getImageMimeType( $image->getPath() );
+								
+							$this->_writeDefaultContentType(
+								$objWriter, strtolower($image->getExtension()), $aMediaContentTypes[strtolower($image->getExtension())]
+							);
+						}
 					}
 				}
 			}

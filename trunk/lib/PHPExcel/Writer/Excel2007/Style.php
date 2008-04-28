@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel_Writer_Excel2007
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
 
 
@@ -533,6 +533,7 @@ class PHPExcel_Writer_Excel2007_Style extends PHPExcel_Writer_Excel2007_WriterPa
 	{
 		// Translate formatcode
 		$formatCode = $pNumberFormat->getFormatCode();
+		$formatCode = str_replace('s', 'ss', $formatCode);
 		$formatCode = str_replace('i', 'mm', $formatCode);
 		$formatCode = str_replace('H', 'h', $formatCode);
 		

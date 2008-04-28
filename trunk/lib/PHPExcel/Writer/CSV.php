@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel_Writer
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
 
 
@@ -152,7 +152,7 @@ class PHPExcel_Writer_CSV implements PHPExcel_Writer_IWriter {
 						$sheet->getstyle( $cell->getCoordinate() )->getNumberFormat()->getFormatCode()
 					);
 				} else {
-					$rowData[$column] = PHPExcel_Style_NumberFormat::ToFormattedString(
+					$rowData[$column] = PHPExcel_Style_NumberFormat::toFormattedString(
 						$cell->getValue(),
 						$sheet->getstyle( $cell->getCoordinate() )->getNumberFormat()->getFormatCode()
 					);

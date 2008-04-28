@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel_Writer
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
 
 
@@ -86,7 +86,9 @@ class PHPExcel_Writer_Serialized implements PHPExcel_Writer_IWriter
 			
 			// Try opening the ZIP file
 			if ($objZip->open($pFilename, ZIPARCHIVE::OVERWRITE) !== true) {
-				throw new Exception("Could not open " . $pFilename . " for writing.");
+				if ($objZip->open($pFilename, ZIPARCHIVE::CREATE) !== true) {
+					throw new Exception("Could not open " . $pFilename . " for writing.");
+				}
 			}
 					
 			// Add media
@@ -168,10 +170,10 @@ class PHPExcel_Writer_Serialized implements PHPExcel_Writer_IWriter
 	
 		// PHPExcel
 		$objWriter->startElement('PHPExcel');
-		$objWriter->writeAttribute('version', '1.6.0');
+		$objWriter->writeAttribute('version', '1.6.1');
 
 			// Comment
-			$objWriter->writeComment('This file has been generated using PHPExcel v1.6.0 (http://www.codeplex.com/PHPExcel). It contains a base64 encoded serialized version of the PHPExcel internal object.');
+			$objWriter->writeComment('This file has been generated using PHPExcel v1.6.1 (http://www.codeplex.com/PHPExcel). It contains a base64 encoded serialized version of the PHPExcel internal object.');
 							
 			// Data
 			$objWriter->startElement('data');

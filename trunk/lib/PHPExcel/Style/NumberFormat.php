@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel_Style
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
 
 
@@ -62,10 +62,11 @@ class PHPExcel_Style_NumberFormat implements PHPExcel_IComparable
 	const FORMAT_DATE_TIME5					= 'i:s';
 	const FORMAT_DATE_TIME6					= 'H:i:s';
 	const FORMAT_DATE_TIME7					= 'i:s.S';
+	const FORMAT_DATE_TIME8					= 'h:mm:ss;@';
 	const FORMAT_DATE_YYYYMMDDSLASH			= 'yyyy/mm/dd;@';
 	
 	const FORMAT_CURRENCY_USD_SIMPLE		= '"$"#,##0.00_-';
-	const FORMAT_CURRENCY_EUR_SIMPLE		= '[$€]#,##0.00_-';
+	const FORMAT_CURRENCY_EUR_SIMPLE		= '[$EUR ]#,##0.00_-';
 	
 	/**
 	 * Format Code

@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel_Shared
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
 
 
@@ -114,7 +114,7 @@ class PHPExcel_Shared_XMLWriter {
      */
     public function __call($function, $args) {
     	try {
-    		@call_user_method_array($function, $this->_xmlWriter, $args);
+    		@call_user_func_array(array($this->_xmlWriter, $function), $args);
     	} catch (Exception $ex) {
     		// Do nothing!
     	}

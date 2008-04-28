@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel_Shared
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
 
 
@@ -83,6 +83,30 @@ class PHPExcel_Shared_Drawing
 		}
 	}
 	
+	/**
+	 * Convert pixels to points
+	 *
+	 * @param 	int $pValue	Value in pixels
+	 * @return 	int			Value in points
+	 */
+	public static function pixelsToPoints($pValue = 0) {
+		return $pValue * 0.67777777;
+	}
+	
+	/**
+	 * Convert points width to pixels
+	 *
+	 * @param 	int $pValue	Value in points
+	 * @return 	int			Value in pixels
+	 */
+	public static function pointsToPixels($pValue = 0) {
+		if ($pValue != 0) {
+			return $pValue * 1.333333333;
+		} else {
+			return 0;
+		}
+	}
+
 	/**
 	 * Convert degrees to angle
 	 *

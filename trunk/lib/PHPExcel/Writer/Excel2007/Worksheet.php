@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel_Writer_Excel2007
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
 
 
@@ -156,6 +156,9 @@ class PHPExcel_Writer_Excel2007_Worksheet extends PHPExcel_Writer_Excel2007_Writ
 				
 				// LegacyDrawing
 				$this->_writeLegacyDrawing($objWriter, $pSheet);
+				
+				// LegacyDrawingHF
+				$this->_writeLegacyDrawingHF($objWriter, $pSheet);
 				
 			$objWriter->endElement();
 
@@ -379,17 +382,18 @@ class PHPExcel_Writer_Excel2007_Worksheet extends PHPExcel_Writer_Excel2007_Writ
 		$id = 1;
 			
 		// Loop trough styles in the current worksheet
-		foreach ($pSheet->getStyles() as $cellCoodrinate => $style) {
+		foreach ($pSheet->getStyles() as $cellCoordinate => $style) {
 			if (count($style->getConditionalStyles()) > 0) {
 				foreach ($style->getConditionalStyles() as $conditional) {
-					if ($this->getParentWriter()->getStylesConditionalHashTable()->getIndexForHashCode( $conditional->getHashCode() ) == '') {
-						continue;
-					}
-					
+					// WHY was this again?
+					// if ($this->getParentWriter()->getStylesConditionalHashTable()->getIndexForHashCode( $conditional->getHashCode() ) == '') {
+					//	continue;
+					// }
+
 					if ($conditional->getConditionType() != PHPExcel_Style_Conditional::CONDITION_NONE) {
 						// conditionalFormatting
 						$objWriter->startElement('conditionalFormatting');
-						$objWriter->writeAttribute('sqref', 	$cellCoodrinate);
+						$objWriter->writeAttribute('sqref', 	$cellCoordinate);
 							
 							// cfRule
 							$objWriter->startElement('cfRule');
@@ -976,6 +980,23 @@ class PHPExcel_Writer_Excel2007_Worksheet extends PHPExcel_Writer_Excel2007_Writ
 		if (count($pSheet->getComments()) > 0) {
 			$objWriter->startElement('legacyDrawing');
 			$objWriter->writeAttribute('r:id', 'rId_comments_vml' . ($pSheet->getParent()->getIndex($pSheet) + 1));
+			$objWriter->endElement();
+		}			
+	}
+	
+	/**
+	 * Write LegacyDrawingHF
+	 *
+	 * @param 	PHPExcel_Shared_XMLWriter		$objWriter 		XML Writer
+	 * @param 	PHPExcel_Worksheet				$pSheet			Worksheet
+	 * @throws 	Exception
+	 */
+	private function _writeLegacyDrawingHF(PHPExcel_Shared_XMLWriter $objWriter = null, PHPExcel_Worksheet $pSheet = null)
+	{
+		// If sheet contains comments, add the relationships
+		if (count($pSheet->getHeaderFooter()->getImages()) > 0) {
+			$objWriter->startElement('legacyDrawingHF');
+			$objWriter->writeAttribute('r:id', 'rId_headerfooter_vml' . ($pSheet->getParent()->getIndex($pSheet) + 1));
 			$objWriter->endElement();
 		}			
 	}

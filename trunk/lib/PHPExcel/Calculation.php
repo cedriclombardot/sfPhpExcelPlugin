@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
 
 
@@ -303,7 +303,7 @@ class PHPExcel_Calculation
 				'LOGINV' 				=> new PHPExcel_Calculation_Function(PHPExcel_Calculation_Function::CATEGORY_STATISTICAL, 			'LOGINV', 				'PHPExcel_Calculation_Functions::LOGINV'),
 				'LOGNORMDIST' 			=> new PHPExcel_Calculation_Function(PHPExcel_Calculation_Function::CATEGORY_STATISTICAL, 			'LOGNORMDIST', 			'PHPExcel_Calculation_Functions::LOGNORMDIST'),
 				'LOOKUP' 				=> new PHPExcel_Calculation_Function(PHPExcel_Calculation_Function::CATEGORY_LOOKUP_AND_REFERENCE,	'LOOKUP', 				'PHPExcel_Calculation_Functions::DUMMY'),
-				'LOWER' 				=> new PHPExcel_Calculation_Function(PHPExcel_Calculation_Function::CATEGORY_TEXT_AND_DATA, 		'LOWER', 				'PHPExcel_Calculation_Functions::strtolower'),
+				'LOWER' 				=> new PHPExcel_Calculation_Function(PHPExcel_Calculation_Function::CATEGORY_TEXT_AND_DATA, 		'LOWER', 				'strtolower'),
 				'MATCH' 				=> new PHPExcel_Calculation_Function(PHPExcel_Calculation_Function::CATEGORY_LOOKUP_AND_REFERENCE,	'MATCH', 				'PHPExcel_Calculation_Functions::DUMMY'),
 				'MAX' 					=> new PHPExcel_Calculation_Function(PHPExcel_Calculation_Function::CATEGORY_STATISTICAL, 			'MAX', 					'PHPExcel_Calculation_Functions::MAX'),
 				'MAXA' 					=> new PHPExcel_Calculation_Function(PHPExcel_Calculation_Function::CATEGORY_STATISTICAL, 			'MAXA', 				'PHPExcel_Calculation_Functions::MAXA'),
@@ -434,7 +434,7 @@ class PHPExcel_Calculation
 				'TRUNC' 				=> new PHPExcel_Calculation_Function(PHPExcel_Calculation_Function::CATEGORY_MATH_AND_TRIG,			'TRUNC', 				'PHPExcel_Calculation_Functions::TRUNC'),
 				'TTEST' 				=> new PHPExcel_Calculation_Function(PHPExcel_Calculation_Function::CATEGORY_STATISTICAL, 			'TTEST', 				'PHPExcel_Calculation_Functions::DUMMY'),
 				'TYPE' 					=> new PHPExcel_Calculation_Function(PHPExcel_Calculation_Function::CATEGORY_INFORMATION, 			'TYPE', 				'PHPExcel_Calculation_Functions::DUMMY'),
-				'UPPER' 				=> new PHPExcel_Calculation_Function(PHPExcel_Calculation_Function::CATEGORY_TEXT_AND_DATA, 		'UPPER', 				'PHPExcel_Calculation_Functions::strtoupper'),
+				'UPPER' 				=> new PHPExcel_Calculation_Function(PHPExcel_Calculation_Function::CATEGORY_TEXT_AND_DATA, 		'UPPER', 				'strtoupper'),
 				'USDOLLAR' 				=> new PHPExcel_Calculation_Function(PHPExcel_Calculation_Function::CATEGORY_FINANCIAL, 			'USDOLLAR', 			'PHPExcel_Calculation_Functions::DUMMY'),
 				'VALUE' 				=> new PHPExcel_Calculation_Function(PHPExcel_Calculation_Function::CATEGORY_TEXT_AND_DATA, 		'VALUE', 				'PHPExcel_Calculation_Functions::DUMMY'),
 				'VAR' 					=> new PHPExcel_Calculation_Function(PHPExcel_Calculation_Function::CATEGORY_STATISTICAL, 			'VAR', 					'PHPExcel_Calculation_Functions::VARFunc'),

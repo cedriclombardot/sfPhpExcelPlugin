@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel_Writer_Excel2007
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
 
 
@@ -319,6 +319,196 @@ class PHPExcel_Writer_Excel2007_Drawing extends PHPExcel_Writer_Excel2007_Writer
 			throw new Exception("Invalid parameters passed.");
 		}
 	}
+	
+	/**
+	 * Write VML header/footer images to XML format
+	 *
+	 * @param 	PHPExcel_Worksheet				$pWorksheet
+	 * @return 	string 								XML Output
+	 * @throws 	Exception
+	 */
+	public function writeVMLHeaderFooterImages(PHPExcel_Worksheet $pWorksheet = null)
+	{
+		// Create XML writer
+		$objWriter = null;
+		if ($this->getParentWriter()->getUseDiskCaching()) {
+			$objWriter = new PHPExcel_Shared_XMLWriter(PHPExcel_Shared_XMLWriter::STORAGE_DISK);
+		} else {
+			$objWriter = new PHPExcel_Shared_XMLWriter(PHPExcel_Shared_XMLWriter::STORAGE_MEMORY);
+		}
+			
+		// XML header
+		$objWriter->startDocument('1.0','UTF-8','yes');
+  
+  		// Header/footer images
+  		$images = $pWorksheet->getHeaderFooter()->getImages();
+ 
+		// xml
+		$objWriter->startElement('xml');
+		$objWriter->writeAttribute('xmlns:v', 'urn:schemas-microsoft-com:vml');
+		$objWriter->writeAttribute('xmlns:o', 'urn:schemas-microsoft-com:office:office');
+		$objWriter->writeAttribute('xmlns:x', 'urn:schemas-microsoft-com:office:excel');
+
+			// o:shapelayout
+			$objWriter->startElement('o:shapelayout');
+			$objWriter->writeAttribute('v:ext', 		'edit');
+			
+				// o:idmap
+				$objWriter->startElement('o:idmap');
+				$objWriter->writeAttribute('v:ext', 	'edit');
+				$objWriter->writeAttribute('data', 		'1');
+				$objWriter->endElement();
+			
+			$objWriter->endElement();
+			
+			// v:shapetype
+			$objWriter->startElement('v:shapetype');
+			$objWriter->writeAttribute('id', 					'_x0000_t75');
+			$objWriter->writeAttribute('coordsize', 			'21600,21600');
+			$objWriter->writeAttribute('o:spt', 				'75');
+			$objWriter->writeAttribute('o:preferrelative', 		't');
+			$objWriter->writeAttribute('path', 					'm@4@5l@4@11@9@11@9@5xe');
+			$objWriter->writeAttribute('filled',		 		'f');
+			$objWriter->writeAttribute('stroked',		 		'f');
+			
+				// v:stroke
+				$objWriter->startElement('v:stroke');
+				$objWriter->writeAttribute('joinstyle', 		'miter');
+				$objWriter->endElement();
+				
+				// v:formulas
+				$objWriter->startElement('v:formulas');
+
+					// v:f
+					$objWriter->startElement('v:f');
+					$objWriter->writeAttribute('eqn', 		'if lineDrawn pixelLineWidth 0');
+					$objWriter->endElement();
+					
+					// v:f
+					$objWriter->startElement('v:f');
+					$objWriter->writeAttribute('eqn', 		'sum @0 1 0');
+					$objWriter->endElement();
+					
+					// v:f
+					$objWriter->startElement('v:f');
+					$objWriter->writeAttribute('eqn', 		'sum 0 0 @1');
+					$objWriter->endElement();
+					
+					// v:f
+					$objWriter->startElement('v:f');
+					$objWriter->writeAttribute('eqn', 		'prod @2 1 2');
+					$objWriter->endElement();
+					
+					// v:f
+					$objWriter->startElement('v:f');
+					$objWriter->writeAttribute('eqn', 		'prod @3 21600 pixelWidth');
+					$objWriter->endElement();
+					
+					// v:f
+					$objWriter->startElement('v:f');
+					$objWriter->writeAttribute('eqn', 		'prod @3 21600 pixelHeight');
+					$objWriter->endElement();
+					
+					// v:f
+					$objWriter->startElement('v:f');
+					$objWriter->writeAttribute('eqn', 		'sum @0 0 1');
+					$objWriter->endElement();
+					
+					// v:f
+					$objWriter->startElement('v:f');
+					$objWriter->writeAttribute('eqn', 		'prod @6 1 2');
+					$objWriter->endElement();
+					
+					// v:f
+					$objWriter->startElement('v:f');
+					$objWriter->writeAttribute('eqn', 		'prod @7 21600 pixelWidth');
+					$objWriter->endElement();
+					
+					// v:f
+					$objWriter->startElement('v:f');
+					$objWriter->writeAttribute('eqn', 		'sum @8 21600 0');
+					$objWriter->endElement();
+					
+					// v:f
+					$objWriter->startElement('v:f');
+					$objWriter->writeAttribute('eqn', 		'prod @7 21600 pixelHeight');
+					$objWriter->endElement();
+					
+					// v:f
+					$objWriter->startElement('v:f');
+					$objWriter->writeAttribute('eqn', 		'sum @10 21600 0');
+					$objWriter->endElement();
+
+				$objWriter->endElement();
+				
+				// v:path
+				$objWriter->startElement('v:path');
+				$objWriter->writeAttribute('o:extrusionok', 	'f');
+				$objWriter->writeAttribute('gradientshapeok', 	't');
+				$objWriter->writeAttribute('o:connecttype', 	'rect');
+				$objWriter->endElement();
+				
+				// o:lock
+				$objWriter->startElement('o:lock');
+				$objWriter->writeAttribute('v:ext', 			'edit');
+				$objWriter->writeAttribute('aspectratio', 		't');
+				$objWriter->endElement();
+			
+			$objWriter->endElement();
+		
+			// Loop trough images
+			foreach ($images as $key => $value) {
+				$this->_writeVMLHeaderFooterImage($objWriter, $key, $value);
+			}
+				
+		$objWriter->endElement();
+
+		// Return
+		return $objWriter->getData();
+	}
+	
+	/**
+	 * Write VML comment to XML format
+	 *
+	 * @param 	PHPExcel_Shared_XMLWriter		$objWriter 			XML Writer
+	 * @param	string							$pReference			Reference
+	 * @param 	PHPExcel_Worksheet_HeaderFooterDrawing	$pImage		Image
+	 * @throws 	Exception
+	 */
+	public function _writeVMLHeaderFooterImage(PHPExcel_Shared_XMLWriter $objWriter = null, $pReference = '', PHPExcel_Worksheet_HeaderFooterDrawing $pImage = null)
+	{
+		// Calculate object id
+		preg_match('{(\d+)}', md5($pReference), $m);
+		$id = 1500 + (substr($m[1], 0, 2) * 1);
+		
+		// Calculate offset
+		$width = $pImage->getWidth();
+		$height = $pImage->getHeight();
+		$marginLeft = $pImage->getOffsetX();
+		$marginTop = $pImage->getOffsetY();
+		
+		// v:shape
+		$objWriter->startElement('v:shape');
+		$objWriter->writeAttribute('id', 			$pReference);
+		$objWriter->writeAttribute('o:spid', 		'_x0000_s' . $id);
+		$objWriter->writeAttribute('type', 			'#_x0000_t75');
+		$objWriter->writeAttribute('style', 		"position:absolute;margin-left:{$marginLeft}px;margin-top:{$marginTop}px;width:{$width}px;height:{$height}px;z-index:1");
+		
+			// v:imagedata
+			$objWriter->startElement('v:imagedata');
+			$objWriter->writeAttribute('o:relid', 		'rId' . $pReference);
+			$objWriter->writeAttribute('o:title', 		$pImage->getName());
+			$objWriter->endElement();
+			
+			// o:lock
+			$objWriter->startElement('o:lock');
+			$objWriter->writeAttribute('v:ext', 		'edit');
+			$objWriter->writeAttribute('rotation', 		't');
+			$objWriter->endElement();
+		
+		$objWriter->endElement();
+	}
+
 	
 	/**
 	 * Get an array of all drawings

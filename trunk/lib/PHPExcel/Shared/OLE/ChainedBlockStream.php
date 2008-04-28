@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel_Shared_OLE
  * @copyright  Copyright (c) 2006 - 2007 Christian Schmidt
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version 1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version 1.6.1, 2008-04-28
  */
 
 require_once 'PHPExcel/Shared/OLE.php';
@@ -224,5 +224,3 @@ class PHPExcel_Shared_OLE_ChainedBlockStream
     // bool dir_rewinddir ( void )
     // bool dir_closedir ( void )
 }
-
-?>

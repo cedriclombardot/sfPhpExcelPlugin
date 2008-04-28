@@ -21,9 +21,13 @@
  * @category   PHPExcel
  * @package    PHPExcel_Worksheet
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
+
+
+/** PHPExcel_Worksheet_HeaderFooterDrawing */
+require_once 'PHPExcel/Worksheet/HeaderFooterDrawing.php';
 
 
 /**
@@ -94,7 +98,15 @@
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  */
 class PHPExcel_Worksheet_HeaderFooter
-{		
+{	
+	/* Header/footer image location */
+	const IMAGE_HEADER_LEFT							= 'LH';
+	const IMAGE_HEADER_CENTER						= 'CH';
+	const IMAGE_HEADER_RIGHT						= 'RH';
+	const IMAGE_FOOTER_LEFT							= 'LF';
+	const IMAGE_FOOTER_CENTER						= 'CF';
+	const IMAGE_FOOTER_RIGHT						= 'RF';
+	
 	/**
 	 * OddHeader
 	 *
@@ -164,6 +176,13 @@ class PHPExcel_Worksheet_HeaderFooter
 	 * @var boolean
 	 */
 	private $_alignWithMargins;
+	
+	/**
+	 * Header/footer images
+	 *
+	 * @var PHPExcel_Worksheet_HeaderFooterDrawing[]
+	 */
+	private $_headerFooterImages = array();
 
     /**
      * Create a new PHPExcel_Worksheet_HeaderFooter
@@ -181,6 +200,7 @@ class PHPExcel_Worksheet_HeaderFooter
     	$this->_differentFirst 		= false;
     	$this->_scaleWithDocument 	= true;
     	$this->_alignWithMargins 	= true;	
+    	$this->_headerFooterImages	= array();
     }
     
     /**
@@ -361,6 +381,62 @@ class PHPExcel_Worksheet_HeaderFooter
      */
     public function setAlignWithMargins($pValue = true) {
     	$this->_alignWithMargins = $pValue;
+    }
+    
+    /**
+     * Add header/footer image
+     *
+     * @param PHPExcel_Worksheet_HeaderFooterDrawing $image
+     * @param string $location
+     * @throws Exception
+     */
+    public function addImage(PHPExcel_Worksheet_HeaderFooterDrawing $image = null, $location = self::IMAGE_HEADER_LEFT) {
+    	$this->_headerFooterImages[$location] = $image;
+    }
+    
+    /**
+     * Remove header/footer image
+     *
+     * @param string $location
+     * @throws Exception
+     */
+    public function removeImage($location = self::IMAGE_HEADER_LEFT) {
+    	if (isset($this->_headerFooterImages[$location])) {
+    		unset($this->_headerFooterImages[$location]);
+    	}
+    }
+    
+    /**
+     * Set header/footer images
+     *
+     * @param PHPExcel_Worksheet_HeaderFooterDrawing[] $images
+     * @throws Exception
+     */
+    public function setImages($images) {
+    	if (!is_array($images)) {
+    		throw new Exception('Invalid parameter!');
+    	}
+    	
+    	$this->_headerFooterImages = $images;
+    }
+    
+    /**
+     * Get header/footer images
+     *
+     * @return HPExcel_Worksheet_HeaderFooterDrawing[]
+     */
+    public function getImages() {
+    	// Sort array
+    	$images = array();
+    	if (isset($this->_headerFooterImages[self::IMAGE_HEADER_LEFT])) 	$images[self::IMAGE_HEADER_LEFT] = 		$this->_headerFooterImages[self::IMAGE_HEADER_LEFT];
+    	if (isset($this->_headerFooterImages[self::IMAGE_HEADER_CENTER])) 	$images[self::IMAGE_HEADER_CENTER] = 	$this->_headerFooterImages[self::IMAGE_HEADER_CENTER];
+    	if (isset($this->_headerFooterImages[self::IMAGE_HEADER_RIGHT])) 	$images[self::IMAGE_HEADER_RIGHT] = 	$this->_headerFooterImages[self::IMAGE_HEADER_RIGHT];
+    	if (isset($this->_headerFooterImages[self::IMAGE_FOOTER_LEFT])) 	$images[self::IMAGE_FOOTER_LEFT] = 		$this->_headerFooterImages[self::IMAGE_FOOTER_LEFT];
+    	if (isset($this->_headerFooterImages[self::IMAGE_FOOTER_CENTER])) 	$images[self::IMAGE_FOOTER_CENTER] = 	$this->_headerFooterImages[self::IMAGE_FOOTER_CENTER];
+    	if (isset($this->_headerFooterImages[self::IMAGE_FOOTER_RIGHT])) 	$images[self::IMAGE_FOOTER_RIGHT] = 	$this->_headerFooterImages[self::IMAGE_FOOTER_RIGHT];
+    	$this->_headerFooterImages = $images;
+    	
+    	return $this->_headerFooterImages;
     }
         
 	/**

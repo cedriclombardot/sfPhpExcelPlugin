@@ -545,4 +545,3 @@ class PHPExcel_Shared_OLE
         return floor($big_date);
     }
 }
-?>

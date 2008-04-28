@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel_Writer
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
 
 
@@ -276,7 +276,9 @@ class PHPExcel_Writer_Excel2007 implements PHPExcel_Writer_IWriter
 			
 			// Try opening the ZIP file
 			if ($objZip->open($pFilename, ZIPARCHIVE::OVERWRITE) !== true) {
-				throw new Exception("Could not open " . $pFilename . " for writing.");
+				if ($objZip->open($pFilename, ZIPARCHIVE::CREATE) !== true) {
+					throw new Exception("Could not open " . $pFilename . " for writing.");
+				}
 			}
 			
 			// Add [Content_Types].xml to ZIP file
@@ -322,7 +324,6 @@ class PHPExcel_Writer_Excel2007 implements PHPExcel_Writer_IWriter
 					$objZip->addFromString('xl/drawings/drawing' . ($i + 1) . '.xml', $this->getWriterPart('Drawing')->writeDrawings($this->_spreadSheet->getSheet($i)));
 				}
 				
-				
 				// Add comment relationship parts
 				if (count($this->_spreadSheet->getSheet($i)->getComments()) > 0) {
 					// VML Comments
@@ -330,6 +331,20 @@ class PHPExcel_Writer_Excel2007 implements PHPExcel_Writer_IWriter
 					
 					// Comments
 					$objZip->addFromString('xl/comments' . ($i + 1) . '.xml', $this->getWriterPart('Comments')->writeComments($this->_spreadSheet->getSheet($i)));
+				}
+				
+				// Add header/footer relationship parts
+				if (count($this->_spreadSheet->getSheet($i)->getHeaderFooter()->getImages()) > 0) {
+					// VML Drawings
+					$objZip->addFromString('xl/drawings/vmlDrawingHF' . ($i + 1) . '.vml', $this->getWriterPart('Drawing')->writeVMLHeaderFooterImages($this->_spreadSheet->getSheet($i)));
+					
+					// VML Drawing relationships
+					$objZip->addFromString('xl/drawings/_rels/vmlDrawingHF' . ($i + 1) . '.vml.rels', $this->getWriterPart('Rels')->writeHeaderFooterDrawingRelationships($this->_spreadSheet->getSheet($i)));
+					
+					// Media
+					foreach ($this->_spreadSheet->getSheet($i)->getHeaderFooter()->getImages() as $image) {
+						$objZip->addFromString('xl/media/' . $image->getFilename(), file_get_contents($image->getPath()));
+					}
 				}
 			}
 			

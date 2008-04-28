@@ -21,8 +21,8 @@
  * @category   PHPExcel
  * @package    PHPExcel
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version    1.6.1, 2008-04-28
  */
 
 
@@ -52,6 +52,12 @@ require_once 'PHPExcel/Worksheet/HeaderFooter.php';
 
 /** PHPExcel_Worksheet_BaseDrawing */
 require_once 'PHPExcel/Worksheet/BaseDrawing.php';
+
+/** PHPExcel_Worksheet_Drawing */
+require_once 'PHPExcel/Worksheet/Drawing.php';
+
+/** PHPExcel_Worksheet_HeaderFooterDrawing */
+require_once 'PHPExcel/Worksheet/HeaderFooterDrawing.php';
 
 /** PHPExcel_Worksheet_Protection */
 require_once 'PHPExcel/Worksheet/Protection.php';
@@ -286,6 +292,9 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
 	 */
 	public function getCellCollection()
 	{
+        // Garbage collect...
+        $this->garbageCollect();
+        
         // Re-order cell collection?
         if (!$this->_cellCollectionIsSorted) {
         	uasort($this->_cellCollection, array('PHPExcel_Cell', 'compareCells'));
@@ -349,12 +358,20 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
 		
 		foreach ($this->getCellCollection() as $cell) {
 			if (isset($autoSizes[$cell->getColumn()])) {
+				$cellValue = $cell->getCalculatedValue();
+
+				foreach ($this->getMergeCells() as $cells) {
+					if ($cell->isInRange($cells)) {
+						$cellValue = ''; // do not calculate merge cells
+					}
+				}
+				
 				$autoSizes[$cell->getColumn()] = max(
 					$autoSizes[$cell->getColumn()],
 					PHPExcel_Shared_Font::calculateColumnWidth(
 						$this->getStyle($cell->getCoordinate())->getFont()->getSize(),
 						false,
-						$cell->getCalculatedValue()
+						$cellValue
 					)
 				);
 			}
@@ -626,10 +643,7 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
     	} else {
 	    	// Coordinates
 	    	$aCoordinates = PHPExcel_Cell::coordinateFromString($pCoordinate);
-	    	
-	    	// Eventually return a dummy cell (named cell references not yet implemented...)
-	    	if (strlen($aCoordinates[0]) > 2) { return new PHPExcel_Cell($aCoordinates[0], $aCoordinates[1], null, null, null); }
-	    	
+
 	        // Cell exists?
 	        if (!isset($this->_cellCollection[ strtoupper($pCoordinate) ])) {
 	        	$this->_cellCollection[ strtoupper($pCoordinate) ] = new PHPExcel_Cell($aCoordinates[0], $aCoordinates[1], null, null, $this);
@@ -650,6 +664,62 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
     public function getCellByColumnAndRow($pColumn = 0, $pRow = 0)
     {
     	return $this->getCell(PHPExcel_Cell::stringFromColumnIndex($pColumn) . $pRow);
+    }
+    
+    /**
+     * Cell at a specific coordinate exists?
+     *
+     * @param 	string 			$pCoordinate	Coordinate of the cell
+     * @throws 	Exception
+     * @return 	boolean
+     */
+    public function cellExists($pCoordinate = 'A1')
+    {
+    	// Worksheet reference?
+		if (strpos($pCoordinate, '!') !== false) {
+			$worksheetReference = PHPExcel_Worksheet::extractSheetTitle($pCoordinate, true);
+			return $this->getParent()->getSheetByName($worksheetReference[0])->cellExists($worksheetReference[1]);
+		}
+			
+		// Named range?
+		$namedRange = PHPExcel_NamedRange::resolveRange($pCoordinate, $this);
+		if (!is_null($namedRange)) {
+			$pCoordinate = $namedRange->getRange();
+			if ($this->getHashCode() != $namedRange->getWorksheet()->getHashCode()) {
+				if (!$namedRange->getLocalOnly()) {
+					return $namedRange->getWorksheet()->cellExists($pCoordinate);
+				} else {
+					throw new Exception('Named range ' . $namedRange->getName() . ' is not accessible from within sheet ' . $this->getTitle());
+				}
+			}
+		}
+		
+    	// Uppercase coordinate
+    	$pCoordinate = strtoupper($pCoordinate);
+    	
+    	if (eregi(':', $pCoordinate)) {
+    		throw new Exception('Cell coordinate can not be a range of cells.');
+    	} else if (eregi('\$', $pCoordinate)) {
+    		throw new Exception('Cell coordinate must not be absolute.');
+    	} else {
+	    	// Coordinates
+	    	$aCoordinates = PHPExcel_Cell::coordinateFromString($pCoordinate);
+
+	        // Cell exists?
+	        return isset($this->_cellCollection[ strtoupper($pCoordinate) ]);
+    	}
+    }
+    
+    /**
+     * Cell at a specific coordinate by using numeric cell coordinates exists?
+     *
+     * @param 	string $pColumn		Numeric column coordinate of the cell
+     * @param 	string $pRow		Numeric row coordinate of the cell
+     * @return 	boolean
+     */
+    public function cellExistsByColumnAndRow($pColumn = 0, $pRow = 0)
+    {
+    	return $this->cellExists(PHPExcel_Cell::stringFromColumnIndex($pColumn) . $pRow);
     }
     
     /**
@@ -1202,6 +1272,9 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
     	} else {
     		throw new Exception("Rows can only be inserted before at least row 1.");
     	}
+    	
+        // Garbage collect...
+        $this->garbageCollect();
     }
     
     /**
@@ -1218,6 +1291,9 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
     	} else {
     		throw new Exception("Column references should not be numeric.");
     	}
+    	
+        // Garbage collect...
+        $this->garbageCollect();
     }
     
     /**
@@ -1233,6 +1309,9 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
     	} else {
     		throw new Exception("Columns can only be inserted before at least column A (1).");
     	}
+    	
+        // Garbage collect...
+        $this->garbageCollect();
     }    
 
     /**
@@ -1249,6 +1328,9 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
     	} else {
     		throw new Exception("Rows to be deleted should at least start from row 1.");
     	}
+    	
+        // Garbage collect...
+        $this->garbageCollect();
     }
     
     /**
@@ -1266,6 +1348,9 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
     	} else {
     		throw new Exception("Column references should not be numeric.");
     	}
+    	
+        // Garbage collect...
+        $this->garbageCollect();
     }
     
     /**
@@ -1281,6 +1366,9 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
     	} else {
     		throw new Exception("Columns can only be inserted before at least column A (1).");
     	}
+    	
+        // Garbage collect...
+        $this->garbageCollect();
     }
     
     /**
@@ -1388,6 +1476,120 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
     public function getCommentByColumnAndRow($pColumn = 0, $pRow = 0)
     {
     	return $this->getComment(PHPExcel_Cell::stringFromColumnIndex($pColumn) . $pRow);
+    }
+    
+    /**
+     * Fill worksheet from values in array
+     *
+     * @param array $source	Source array
+     * @param mixed $nullValue Value treated as "null"
+     * @throws Exception
+     */
+    public function fromArray($source = null, $nullValue = null) {
+    	if (is_array($source)) {
+			// Loop trough $source
+			$currentRow = 0;
+			$rowData = null;
+			foreach ($source as $rowData) {
+				$currentRow++;
+				
+				for ($i = 0; $i < count($rowData); $i++) {
+					if ($rowData[$i] != $nullValue) {
+						// Set cell value
+						$objPHPExcel->getActiveSheet()->setCellValue(
+							PHPExcel_Cell::stringFromColumnIndex($i) . $currentRow, $rowData[$i]
+						);
+					}
+				}
+			}
+    	} else {
+    		throw new Exception("Parameter \$source should be an array.");
+    	}
+    }
+    
+    /**
+     * Create array from worksheet
+     *
+     * @param mixed $nullValue Value treated as "null"
+     * @param boolean $calculateFormulas Should formulas be calculated?
+     * @return array
+     */
+    public function toArray($nullValue = null, $calculateFormulas = true) {
+    	// Returnvalue
+    	$returnValue = array();
+    	
+        // Garbage collect...
+        $this->garbageCollect();
+        
+    	// Get worksheet dimension
+    	$dimension = explode(':', $this->calculateWorksheetDimension());
+    	$dimension[0] = PHPExcel_Cell::coordinateFromString($dimension[0]);
+    	$dimension[0][0] = PHPExcel_Cell::columnIndexFromString($dimension[0][0]) - 1;
+    	$dimension[1] = PHPExcel_Cell::coordinateFromString($dimension[1]);
+    	$dimension[1][0] = PHPExcel_Cell::columnIndexFromString($dimension[1][0]) - 1;
+    	
+    	// Loop trough cells
+    	for ($row = $dimension[0][1]; $row <= $dimension[1][1]; $row++) {
+    		for ($column = $dimension[0][0]; $column <= $dimension[1][0]; $column++) {
+    			// Cell exists?
+    			if ($this->cellExistsByColumnAndRow($column, $row)) {
+    				if ($this->getCellByColumnAndRow($column, $row)->getValue() instanceof PHPExcel_RichText) {
+    					$returnValue[$row][$column] = $this->getCellByColumnAndRow($column, $row)->getValue()->getPlainText();
+    				} else {
+	    				if ($calculateFormulas) {
+	    					$returnValue[$row][$column] = $this->getCellByColumnAndRow($column, $row)->getCalculatedValue();
+	    				} else {
+	    					$returnValue[$row][$column] = $this->getCellByColumnAndRow($column, $row)->getValue();
+	    				}
+    				}
+    			} else {
+    				$returnValue[$row][$column] = $nullValue;
+    			}
+    		}	
+    	}	
+    	
+    	// Return
+    	return $returnValue;
+    }
+    
+    /**
+     * Run PHPExcel garabage collector.
+     */
+    public function garbageCollect() {
+    	// Find cells that can be cleaned
+    	foreach ($this->_cellCollection as $coordinate => $cell) {
+    		// Can be cleaned?
+    		$canBeCleaned = false;
+    		
+    		// Empty value?
+    		if (is_null($cell->getValue()) || (!is_object($cell->getValue()) && $cell->getValue() === '' && !$cell->hasHyperlink())) {
+    			// Style set? Default style?
+    			if (!isset($this->_styles[$coordinate]) || $this->_styles[$coordinate]->getHashCode() == $this->_styles['default']->getHashCode()) {
+    				// It can be cleaned!
+    				$canBeCleaned = true;
+    			}
+    		}
+    		
+    		// Referenced in image?
+    		$iterator = $this->getDrawingCollection()->getIterator();
+    		while ($iterator->valid()) {
+    			if ($iterator->current()->getCoordinates() == $coordinate) {
+    				$canBeCleaned = false;
+    			}
+    			
+    			$iterator->next();
+    		}
+    		
+    		// Clean?
+    		if ($canBeCleaned) {
+    			unset($this->_cellCollection[$coordinate]);
+    			
+    			// Does it resemble the default style?
+    			if (isset($this->_styles[$coordinate]) && $this->_styles[$coordinate]->getHashCode() == $this->_styles['default']->getHashCode()) {
+    				unset($this->_styles[$coordinate]);
+    			}
+    		}
+    	}
     }
     
 	/**
