@@ -36,5 +36,5 @@ sfPhpExcelPlugin work with [http://www.phpexcel.net PHPExcel]. It can generate M
 == Changelog ==
 
 === TRUNK ===
- * PHPExcel version 1.6.1
+ * PHPExcel (Add externals for libraries)
  * Modification of examples to work with symfony
