@@ -22,7 +22,7 @@
  * @package    PHPExcel_Style
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -109,26 +109,181 @@ class PHPExcel_Style_Borders implements PHPExcel_IComparable
 	 * @var boolean
 	 */
 	private $_outline;
+	
+	/**
+	 * Parent
+	 *
+	 * @var PHPExcel_Style
+	 */
+	 
+	private $_parent;
+	
+	/**
+	 * Parent Borders
+	 *
+	 * @var _parentPropertyName string
+	 */
+	private $_parentPropertyName;
 		
-    /**
+	/**
      * Create a new PHPExcel_Style_Borders
      */
     public function __construct()
     {
     	// Initialise values
-		$this->_left				= new PHPExcel_Style_Border();
-		$this->_right				= new PHPExcel_Style_Border();
-		$this->_top					= new PHPExcel_Style_Border();
-		$this->_bottom				= new PHPExcel_Style_Border();
-		$this->_diagonal			= new PHPExcel_Style_Border();
-		$this->_vertical			= new PHPExcel_Style_Border();
-		$this->_horizontal			= new PHPExcel_Style_Border();
+    	
+		/**
+		 * The following properties are late bound. Binding is initiated by property classes when they are modified.
+		 *
+		 * _left
+		 * _right
+		 * _top
+		 * _bottom
+		 * _diagonal
+		 * _vertical
+		 * _horizontal
+		 *
+		 */
 	
     	$this->_diagonalDirection	= PHPExcel_Style_Borders::DIAGONAL_NONE;
     	$this->_outline				= true;
     }
-    
+
+	/**
+	 * Property Prepare bind
+	 *
+	 * Configures this object for late binding as a property of a parent object
+	 *	 
+	 * @param $parent
+	 * @param $parentPropertyName
+	 */
+	public function propertyPrepareBind($parent, $parentPropertyName)
+	{
+		// Initialize parent PHPExcel_Style for late binding. This relationship purposely ends immediately when this object
+		// is bound to the PHPExcel_Style object pointed to so as to prevent circular references.
+		$this->_parent		 		= $parent;
+		$this->_parentPropertyName	= $parentPropertyName;
+	}
+
     /**
+     * Property Get Bound
+     *
+     * Returns the PHPExcel_Style_Borders that is actual bound to PHPExcel_Style
+	 *
+	 * @return PHPExcel_Style_Borders
+     */
+	private function propertyGetBound() {
+		if(!isset($this->_parent))
+			return $this;																// I am bound
+
+		if($this->_parent->propertyIsBound($this->_parentPropertyName))
+			return $this->_parent->getBorders();										// Another one is bound
+
+		return $this;																	// No one is bound yet
+	}
+	
+    /**
+     * Property Begin Bind
+     *
+     * If no PHPExcel_Style_Borders has been bound to PHPExcel_Style then bind this one. Return the actual bound one.
+	 *
+	 * @return PHPExcel_Style_Borders
+     */
+	private function propertyBeginBind() {
+		if(!isset($this->_parent))
+			return $this;																// I am already bound
+
+		if($this->_parent->propertyIsBound($this->_parentPropertyName))
+			return $this->_parent->getBorders();										// Another one is already bound
+			
+		$this->_parent->propertyCompleteBind($this, $this->_parentPropertyName);		// Bind myself
+		$this->_parent = null;
+		
+		return $this;
+	}
+          
+
+    /**
+     * Property Complete Bind
+     *
+     * Complete the binding process a child property object started
+	 *
+     * @param	$propertyObject
+     * @param	$propertyName			Name of this property in the parent object
+     */ 
+    public function propertyCompleteBind($propertyObject, $propertyName) {
+    	switch($propertyName) {
+    		case "_left":
+				$this->propertyBeginBind()->_left = $propertyObject;
+				break;
+    			
+    		case "_right":
+				$this->propertyBeginBind()->_right = $propertyObject;
+				break;
+    			
+    		case "_top":
+				$this->propertyBeginBind()->_top = $propertyObject;
+				break;
+    			
+    		case "_bottom":
+				$this->propertyBeginBind()->_bottom = $propertyObject;
+				break;
+    			
+			case "_diagonal":
+				$this->propertyBeginBind()->_diagonal = $propertyObject;
+				break;
+				
+			case "_vertical":
+				$this->propertyBeginBind()->_vertical = $propertyObject;
+				break;
+			
+			case "_horizontal":
+				$this->propertyBeginBind()->_horizontal = $propertyObject;
+				break;
+
+			default:
+				throw new Exception("Invalid property passed.");
+    	}
+    }
+
+	/**
+	 * Property Is Bound
+	 *
+	 * Determines if a child property is bound to this one
+	 *
+     * @param	$propertyName			Name of this property in the parent object
+	 *
+	 * @return boolean
+	 */
+	public function propertyIsBound($propertyName) {
+    	switch($propertyName) {
+    		case "_left":
+				return isset($this->propertyGetBound()->_left);
+
+    		case "_right":
+				return isset($this->propertyGetBound()->_right);
+    			
+    		case "_top":
+				return isset($this->propertyGetBound()->_top);
+    			
+    		case "_bottom":
+				return isset($this->propertyGetBound()->_bottom);
+    			
+    		case "_diagonal":
+				return isset($this->propertyGetBound()->_diagonal);
+    			
+			case "_vertical":
+				return isset($this->propertyGetBound()->_vertical);
+				
+			case "_horizontal":
+				return isset($this->propertyGetBound()->_horizontal);
+				
+			default:
+				throw new Exception("Invalid property passed.");
+		}
+	}
+	
+	/**
      * Apply styles from array
      * 
      * <code>
@@ -211,7 +366,13 @@ class PHPExcel_Style_Borders implements PHPExcel_IComparable
      * @return PHPExcel_Style_Border
      */
     public function getLeft() {
-    	return $this->_left;
+    	$property = $this->propertyGetBound();
+		if(isset($property->_left))
+			return $property->_left;
+
+		$property = new PHPExcel_Style_Border();
+		$property->propertyPrepareBind($this, "_left");
+		return $property;
     }
     
     /**
@@ -220,7 +381,14 @@ class PHPExcel_Style_Borders implements PHPExcel_IComparable
      * @return PHPExcel_Style_Border
      */
     public function getRight() {
-    	return $this->_right;
+    	$property = $this->propertyGetBound();
+		if(isset($property->_right))
+			return $property->_right;
+
+
+		$property = new PHPExcel_Style_Border();
+		$property->propertyPrepareBind($this, "_right");
+		return $property;
     }
        
     /**
@@ -229,7 +397,14 @@ class PHPExcel_Style_Borders implements PHPExcel_IComparable
      * @return PHPExcel_Style_Border
      */
     public function getTop() {
-    	return $this->_top;
+    	$property = $this->propertyGetBound();
+		if(isset($property->_top))
+			return $property->_top;
+
+
+		$property = new PHPExcel_Style_Border();
+		$property->propertyPrepareBind($this, "_top");
+		return $property;
     }
     
     /**
@@ -238,7 +413,13 @@ class PHPExcel_Style_Borders implements PHPExcel_IComparable
      * @return PHPExcel_Style_Border
      */
     public function getBottom() {
-    	return $this->_bottom;
+    	$property = $this->propertyGetBound();
+		if(isset($property->_bottom))
+			return $property->_bottom;
+
+		$property = new PHPExcel_Style_Border();
+		$property->propertyPrepareBind($this, "_bottom");
+		return $property;
     }
 
     /**
@@ -247,7 +428,13 @@ class PHPExcel_Style_Borders implements PHPExcel_IComparable
      * @return PHPExcel_Style_Border
      */
     public function getDiagonal() {
-    	return $this->_diagonal;
+    	$property = $this->propertyGetBound();
+		if(isset($property->_diagonal))
+			return $property->_diagonal;
+
+		$property = new PHPExcel_Style_Border();
+		$property->propertyPrepareBind($this, "_diagonal");
+		return $property;
     }
     
     /**
@@ -256,7 +443,13 @@ class PHPExcel_Style_Borders implements PHPExcel_IComparable
      * @return PHPExcel_Style_Border
      */
     public function getVertical() {
-    	return $this->_vertical;
+    	$property = $this->propertyGetBound();
+		if(isset($property->_vertical))
+			return $property->_vertical;
+
+		$property = new PHPExcel_Style_Border();
+		$property->propertyPrepareBind($this, "_vertical");
+		return $property;
     }
     
     /**
@@ -265,7 +458,13 @@ class PHPExcel_Style_Borders implements PHPExcel_IComparable
      * @return PHPExcel_Style_Border
      */
     public function getHorizontal() {
-    	return $this->_horizontal;
+    	$property = $this->propertyGetBound();
+		if(isset($property->_horizontal))
+			return $property->_horizontal;
+
+		$property = new PHPExcel_Style_Border();
+		$property->propertyPrepareBind($this, "_horizontal");
+		return $property;
     }
     
     /**
@@ -274,7 +473,7 @@ class PHPExcel_Style_Borders implements PHPExcel_IComparable
      * @return int
      */
     public function getDiagonalDirection() {
-    	return $this->_diagonalDirection;
+    	return $this->propertyGetBound()->_diagonalDirection;
     }
     
     /**
@@ -286,7 +485,7 @@ class PHPExcel_Style_Borders implements PHPExcel_IComparable
         if ($pValue == '') {
     		$pValue = PHPExcel_Style_Borders::DIAGONAL_NONE;
     	}
-    	$this->_diagonalDirection = $pValue;
+    	$this->propertyBeginBind()->_diagonalDirection = $pValue;
     }
     
     /**
@@ -295,7 +494,7 @@ class PHPExcel_Style_Borders implements PHPExcel_IComparable
      * @return boolean
      */
     public function getOutline() {
-    	return $this->_outline;
+    	return $this->propertyGetBound()->_outline;
     }
     
     /**
@@ -307,7 +506,7 @@ class PHPExcel_Style_Borders implements PHPExcel_IComparable
         if ($pValue == '') {
     		$pValue = true;
     	}
-    	$this->_outline = $pValue;
+    	$this->propertyBeginBind()->_outline = $pValue;
     }
     
 	/**
@@ -316,16 +515,17 @@ class PHPExcel_Style_Borders implements PHPExcel_IComparable
 	 * @return string	Hash code
 	 */	
 	public function getHashCode() {
+		$property = $this->propertyGetBound();
     	return md5(
-    		  $this->getLeft()->getHashCode()
-    		. $this->getRight()->getHashCode()
-    		. $this->getTop()->getHashCode()
-    		. $this->getBottom()->getHashCode()
-    		. $this->getDiagonal()->getHashCode()
-    		. $this->getVertical()->getHashCode()
-    		. $this->getHorizontal()->getHashCode()
-    		. $this->getDiagonalDirection()
-    		. ($this->getOutline() ? 't' : 'f')
+    		  $property->getLeft()->getHashCode()
+    		. $property->getRight()->getHashCode()
+    		. $property->getTop()->getHashCode()
+    		. $property->getBottom()->getHashCode()
+    		. $property->getDiagonal()->getHashCode()
+    		. $property->getVertical()->getHashCode()
+    		. $property->getHorizontal()->getHashCode()
+    		. $property->getDiagonalDirection()
+    		. ($property->getOutline() ? 't' : 'f')
     		. __CLASS__
     	);
     }

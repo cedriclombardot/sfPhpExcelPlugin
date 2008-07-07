@@ -22,7 +22,7 @@
  * @package    PHPExcel_Writer
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -37,6 +37,9 @@ require_once 'PHPExcel/RichText.php';
 
 /** PHPExcel_Shared_Drawing */
 require_once 'PHPExcel/Shared/Drawing.php';
+
+/** PHPExcel_Shared_String */
+require_once 'PHPExcel/Shared/String.php';
 
 /** PHPExcel_HashTable */
 require_once 'PHPExcel/HashTable.php';
@@ -72,13 +75,21 @@ class PHPExcel_Writer_HTML implements PHPExcel_Writer_IWriter {
 	private $_preCalculateFormulas = true;
 	
 	/**
+	 * Images root
+	 *
+	 * @var string
+	 */
+	private $_imagesRoot = '.';
+	
+	/**
 	 * Create a new PHPExcel_Writer_HTML
 	 *
 	 * @param 	PHPExcel	$phpExcel	PHPExcel object
 	 */
 	public function __construct(PHPExcel $phpExcel) {
 		$this->_phpExcel = $phpExcel;
-		$this->_sheetIndex 	= 0;
+		$this->_sheetIndex = 0;
+		$this->_imagesRoot = '.';
 	}
 	
 	/**
@@ -88,59 +99,74 @@ class PHPExcel_Writer_HTML implements PHPExcel_Writer_IWriter {
 	 * @throws 	Exception
 	 */	
 	public function save($pFilename = null) {
-		// Fetch sheet
-		$sheet = $this->_phpExcel->getSheet($this->_sheetIndex);
-		
 		// Open file
 		$fileHandle = fopen($pFilename, 'w');
 		if ($fileHandle === false) {
 			throw new Exception("Could not open file $pFilename for writing.");
 		}
 		
-		// Get cell collection
-		$cellCollection = $sheet->getCellCollection();
+		// Fetch sheets
+		$sheets = array();
+		if (is_null($this->_sheetIndex)) {
+			$sheets = $this->_phpExcel->getAllSheets();
+		} else {
+			$sheets[] = $this->_phpExcel->getSheet($this->_sheetIndex);
+		}
 		
-
 		// Write headers
 		$this->_writeHTMLHeader($fileHandle);
-		$this->_writeStyles($fileHandle, $sheet);
-		$this->_writeTableHeader($fileHandle);
+		$this->_writeStyles($fileHandle, $sheets);
 		
-    	// Get worksheet dimension
-    	$dimension = explode(':', $sheet->calculateWorksheetDimension());
-    	$dimension[0] = PHPExcel_Cell::coordinateFromString($dimension[0]);
-    	$dimension[0][0] = PHPExcel_Cell::columnIndexFromString($dimension[0][0]) - 1;
-    	$dimension[1] = PHPExcel_Cell::coordinateFromString($dimension[1]);
-    	$dimension[1][0] = PHPExcel_Cell::columnIndexFromString($dimension[1][0]) - 1;
-
-    	// Loop trough cells
-    	$rowData = null;
-    	for ($row = $dimension[0][1]; $row <= $dimension[1][1]; $row++) {
-			// Start a new row
-			$rowData = array();
-						
-			// Loop trough columns
-    		for ($column = $dimension[0][0]; $column <= $dimension[1][0]; $column++) {
-    			// Cell exists?
-    			if ($sheet->cellExistsByColumnAndRow($column, $row)) {
-    				$rowData[$column] = $sheet->getCellByColumnAndRow($column, $row);
-    			} else {
-    				$rowData[$column] = '';
-    			}
-    		}
-
-    		// Write row
-			$this->_writeRow($fileHandle, $sheet, $rowData, $row - 1);
-    	}
+		// Loop all sheets
+		foreach ($sheets as $sheet) {
+			// Calculate hash code
+			$hashCode = $sheet->getHashCode();
+				
+			// Get cell collection
+			$cellCollection = $sheet->getCellCollection();
 			
-		// Write footers
-		$this->_writeTableFooter($fileHandle);
+			// Write header
+			$this->_writeTableHeader($fileHandle, $hashCode);
+			
+	    	// Get worksheet dimension
+	    	$dimension = explode(':', $sheet->calculateWorksheetDimension());
+	    	$dimension[0] = PHPExcel_Cell::coordinateFromString($dimension[0]);
+	    	$dimension[0][0] = PHPExcel_Cell::columnIndexFromString($dimension[0][0]) - 1;
+	    	$dimension[1] = PHPExcel_Cell::coordinateFromString($dimension[1]);
+	    	$dimension[1][0] = PHPExcel_Cell::columnIndexFromString($dimension[1][0]) - 1;
+	
+	    	// Loop trough cells
+	    	$rowData = null;
+	    	for ($row = $dimension[0][1]; $row <= $dimension[1][1]; $row++) {
+				// Start a new row
+				$rowData = array();
+							
+				// Loop trough columns
+	    		for ($column = $dimension[0][0]; $column <= $dimension[1][0]; $column++) {
+	    			// Cell exists?
+	    			if ($sheet->cellExistsByColumnAndRow($column, $row)) {
+	    				$rowData[$column] = $sheet->getCellByColumnAndRow($column, $row);
+	    			} else {
+	    				$rowData[$column] = '';
+	    			}
+	    		}
+	
+	    		// Write row
+				$this->_writeRow($fileHandle, $sheet, $rowData, $row - 1);
+	    	}
+				
+			// Write footer
+			$this->_writeTableFooter($fileHandle);
+		}
+		
+		// Write footer
 		$this->_writeHTMLFooter($fileHandle);
+		
 		
 		// Close file
 		fclose($fileHandle);
 	}
-	
+ 	
 	/**
 	 * Map VAlign
 	 */	
@@ -200,6 +226,13 @@ class PHPExcel_Writer_HTML implements PHPExcel_Writer_IWriter {
 	}
 	
 	/**
+	 * Write all sheets (resets sheetIndex to NULL)
+	 */
+	public function writeAllSheets() {
+		$this->_sheetIndex = null;
+	}
+	
+	/**
 	 * Write HTML header to file
 	 * 
 	 * @param	mixed	$pFileHandle	PHP filehandle
@@ -242,6 +275,14 @@ class PHPExcel_Writer_HTML implements PHPExcel_Writer_IWriter {
 				if ($drawing instanceof PHPExcel_Worksheet_BaseDrawing) {
 					if ($drawing->getCoordinates() == $coordinates) {
 						$filename = $drawing->getPath();
+						
+						// Strip off eventual '.'
+						if (substr($filename, 0, 1) == '.') {
+							$filename = substr($filename, 1);
+						}
+						
+						// Prepend images root
+						$filename = $this->getImagesRoot() . $filename;
 
 						$html .= "\r\n";
 						$html .= '        <img  style="position: relative; left: ' . $drawing->getOffsetX() . 'px; top: ' . $drawing->getOffsetY() . 'px; width: ' . $drawing->getWidth() . 'px; height: ' . $drawing->getHeight() . 'px;" src="' . $filename . '" border="0">' . "\r\n";
@@ -259,12 +300,12 @@ class PHPExcel_Writer_HTML implements PHPExcel_Writer_IWriter {
 	/**
 	 * Write styles to file
 	 * 
-	 * @param	mixed				$pFileHandle	PHP filehandle
-	 * @param	PHPExcel_Worksheet 	$pSheet			PHPExcel_Worksheet
+	 * @param	mixed					$pFileHandle	PHP filehandle
+	 * @param	PHPExcel_Worksheet[] 	$pSheets		Array of PHPExcel_Worksheet
 	 * @throws	Exception
 	 */
-	private function _writeStyles($pFileHandle = null, PHPExcel_Worksheet $pSheet) {
-		if (!is_null($pFileHandle)) {
+	private function _writeStyles($pFileHandle = null, $pSheets) {
+		if (!is_null($pFileHandle) && is_array($pSheets)) {
 			// Construct HTML
 			$html = '';
 			
@@ -276,44 +317,53 @@ class PHPExcel_Writer_HTML implements PHPExcel_Writer_IWriter {
 			$html .= '        font-size: 10pt;' . "\r\n";
 			$html .= '        background-color: white;' . "\r\n";
 			$html .= '      }' . "\r\n";
-			$html .= '      table.sheet, table.sheet td {' . "\r\n";
-			if ($pSheet->getShowGridlines()) {
-				$html .= '        border: 1px dotted black;' . "\r\n";
-			}
-			$html .= '      }' . "\r\n";				
 			
-			// Calculate column widths
-			$pSheet->calculateColumnWidths();
-			foreach ($pSheet->getColumnDimensions() as $columnDimension) {
-				$column = PHPExcel_Cell::columnIndexFromString($columnDimension->getColumnIndex()) - 1;
+			// Write styles per sheet
+			foreach ($pSheets as $sheet) {
+				// Calculate hash code
+				$hashCode = $sheet->getHashCode();
 				
-				$html .= '      td.column' . $column  . ' {' . "\r\n";
-				$html .= '        width: ' . PHPExcel_Shared_Drawing::cellDimensionToPixels($columnDimension->getWidth()) . 'px;' . "\r\n";
-				if ($columnDimension->getVisible() === false) {
-					$html .= '        display: none;' . "\r\n";
-					$html .= '        visibility: hidden;' . "\r\n";
+				// Write styles
+				$html .= '      table.sheet' . $hashCode . ', table.sheet' . $hashCode . ' td {' . "\r\n";
+				if ($sheet->getShowGridlines()) {
+					$html .= '        border: 1px dotted black;' . "\r\n";
 				}
-				$html .= '      }' . "\r\n";
-			}
+				$html .= '        page-break-after: always;' . "\r\n";
+				$html .= '      }' . "\r\n";				
 			
-			// Calculate row heights
-			foreach ($pSheet->getRowDimensions() as $rowDimension) {
-				$html .= '      tr.row' . ($rowDimension->getRowIndex() - 1)  . ' {' . "\r\n";
-				// height is disproportionately large
-				$px_height = round( PHPExcel_Shared_Drawing::cellDimensionToPixels($rowDimension->getRowHeight()) /12 );
-				$html .= '        height: ' . $px_height . 'px;' . "\r\n";
-				if ($rowDimension->getVisible() === false) {
-					$html .= '        display: none;' . "\r\n";
-					$html .= '        visibility: hidden;' . "\r\n";
+				// Calculate column widths
+				$sheet->calculateColumnWidths();
+				foreach ($sheet->getColumnDimensions() as $columnDimension) {
+					$column = PHPExcel_Cell::columnIndexFromString($columnDimension->getColumnIndex()) - 1;
+					
+					$html .= '      table.sheet' . $hashCode . ' td.column' . $column  . ' {' . "\r\n";
+					$html .= '        width: ' . PHPExcel_Shared_Drawing::cellDimensionToPixels($columnDimension->getWidth()) . 'px;' . "\r\n";
+					if ($columnDimension->getVisible() === false) {
+						$html .= '        display: none;' . "\r\n";
+						$html .= '        visibility: hidden;' . "\r\n";
+					}
+					$html .= '      }' . "\r\n";
 				}
-				$html .= '      }' . "\r\n";
-			}
 			
-			// Calculate cell style hashes
-			$cellStyleHashes = new PHPExcel_HashTable();
-			$cellStyleHashes->addFromSource( $pSheet->getStyles() );
-			for ($i = 0; $i < $cellStyleHashes->count(); $i++) {
-				$html .= $this->_createCSSStyle( $cellStyleHashes->getByIndex($i) );
+				// Calculate row heights
+				foreach ($sheet->getRowDimensions() as $rowDimension) {
+					$html .= '      table.sheet' . $hashCode . ' tr.row' . ($rowDimension->getRowIndex() - 1)  . ' {' . "\r\n";
+					// height is disproportionately large
+					$px_height = round( PHPExcel_Shared_Drawing::cellDimensionToPixels($rowDimension->getRowHeight()) /12 );
+					$html .= '        height: ' . $px_height . 'px;' . "\r\n";
+					if ($rowDimension->getVisible() === false) {
+						$html .= '        display: none;' . "\r\n";
+						$html .= '        visibility: hidden;' . "\r\n";
+					}
+					$html .= '      }' . "\r\n";
+				}
+			
+				// Calculate cell style hashes
+				$cellStyleHashes = new PHPExcel_HashTable();
+				$cellStyleHashes->addFromSource( $sheet->getStyles() );
+				for ($i = 0; $i < $cellStyleHashes->count(); $i++) {
+					$html .= $this->_createCSSStyle( $cellStyleHashes->getByIndex($i) );
+				}
 			}
 			
 			// End styles
@@ -478,13 +528,14 @@ class PHPExcel_Writer_HTML implements PHPExcel_Writer_IWriter {
 	 * Write table header to file
 	 * 
 	 * @param	mixed	$pFileHandle	PHP filehandle
+	 * @param 	string	$pIdentifier	Identifier for the table
 	 * @throws	Exception
 	 */
-	private function _writeTableHeader($pFileHandle = null) {
+	private function _writeTableHeader($pFileHandle = null, $pIdentifier = '') {
 		if (!is_null($pFileHandle)) {
 			// Construct HTML
 			$html = '';
-			$html .= '    <table border="0" cellpadding="0" cellspacing="0" class="sheet">' . "\r\n";
+			$html .= '    <table border="0" cellpadding="0" cellspacing="0" class="sheet' . $pIdentifier . '">' . "\r\n";
 
 			// Write to file
 			fwrite($pFileHandle, $html);
@@ -550,7 +601,11 @@ class PHPExcel_Writer_HTML implements PHPExcel_Writer_IWriter {
 									) . '">';
 							}
 							
-							$cellData .= $element->getText();
+							// Decode UTF8 data
+							$cellText = $element->getText();
+							if (PHPExcel_Shared_String::IsUTF8($cellText)) {
+								$cellData .= utf8_decode($cellText);
+							}
 							
 							if ($element instanceof PHPExcel_RichText_Run) {
 								$cellData .= '</span>';
@@ -567,6 +622,11 @@ class PHPExcel_Writer_HTML implements PHPExcel_Writer_IWriter {
 								$cell->getValue(),
 								$pSheet->getstyle( $cell->getCoordinate() )->getNumberFormat()->getFormatCode()
 							);
+						}
+
+						// Decode UTF8 data
+						if (PHPExcel_Shared_String::IsUTF8($cellData)) {
+							$cellData = utf8_decode($cellData);
 						}
 					}
 					
@@ -660,5 +720,23 @@ class PHPExcel_Writer_HTML implements PHPExcel_Writer_IWriter {
      */
     public function setPreCalculateFormulas($pValue = true) {
     	$this->_preCalculateFormulas = $pValue;
+    }
+    
+    /**
+     * Get images root
+     *
+     * @return string
+     */
+    public function getImagesRoot() {
+    	return $this->_imagesRoot;
+    }
+    
+    /**
+     * Set images root
+     *
+     * @param string $pValue
+     */
+    public function setImagesRoot($pValue = '.') {
+    	$this->_imagesRoot = $pValue;
     }
 }

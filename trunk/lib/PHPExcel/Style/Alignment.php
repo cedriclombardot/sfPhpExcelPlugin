@@ -22,7 +22,7 @@
  * @package    PHPExcel_Style
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -79,6 +79,21 @@ class PHPExcel_Style_Alignment implements PHPExcel_IComparable
 	 * @var boolean
 	 */
 	private $_wrapText;
+	
+	/**
+	 * Parent Style
+	 *
+	 * @var PHPExcel_Style
+	 */
+	 
+	private $_parent;
+	
+	/**
+	 * Parent Borders
+	 *
+	 * @var _parentPropertyName string
+	 */
+	private $_parentPropertyName;
 		
     /**
      * Create a new PHPExcel_Style_Alignment
@@ -91,7 +106,60 @@ class PHPExcel_Style_Alignment implements PHPExcel_IComparable
     	$this->_textRotation		= 0;
     	$this->_wrapText			= false;
     }
-    
+
+	/**
+	 * Property Prepare bind
+	 *
+	 * Configures this object for late binding as a property of a parent object
+	 *	 
+	 * @param $parent
+	 * @param $parentPropertyName
+	 */
+	public function propertyPrepareBind($parent, $parentPropertyName)
+	{
+		// Initialize parent PHPExcel_Style for late binding. This relationship purposely ends immediately when this object
+		// is bound to the PHPExcel_Style object pointed to so as to prevent circular references.
+		$this->_parent				= $parent;
+		$this->_parentPropertyName	= $parentPropertyName;
+	}
+	
+    /**
+     * Property Get Bound
+     *
+     * Returns the PHPExcel_Style_Alignment that is actual bound to PHPExcel_Style
+	 *
+	 * @return PHPExcel_Style_Alignment
+     */
+	private function propertyGetBound() {
+		if(!isset($this->_parent))
+			return $this;																// I am bound
+
+		if($this->_parent->propertyIsBound($this->_parentPropertyName))
+			return $this->_parent->getAlignment();										// Another one is bound
+
+		return $this;																	// No one is bound yet
+	}
+	
+    /**
+     * Property Begin Bind
+     *
+     * If no PHPExcel_Style_Alignment has been bound to PHPExcel_Style then bind this one. Return the actual bound one.
+	 *
+	 * @return PHPExcel_Style_Alignment
+     */
+	private function propertyBeginBind() {
+		if(!isset($this->_parent))
+			return $this;																// I am already bound
+
+		if($this->_parent->propertyIsBound($this->_parentPropertyName))
+			return $this->_parent->getAlignment();										// Another one is already bound
+			
+		$this->_parent->propertyCompleteBind($this, $this->_parentPropertyName);		// Bind myself
+		$this->_parent = null;
+		
+		return $this;
+	}
+	
     /**
      * Apply styles from array
      * 
@@ -134,7 +202,7 @@ class PHPExcel_Style_Alignment implements PHPExcel_IComparable
      * @return string
      */
     public function getHorizontal() {
-    	return $this->_horizontal;
+    	return $this->propertyGetBound()->_horizontal;
     }
     
     /**
@@ -146,7 +214,7 @@ class PHPExcel_Style_Alignment implements PHPExcel_IComparable
         if ($pValue == '') {
     		$pValue = PHPExcel_Style_Alignment::HORIZONTAL_GENERAL;
     	}
-    	$this->_horizontal = $pValue;
+    	$this->propertyBeginBind()->_horizontal = $pValue;
     }
     
     /**
@@ -155,7 +223,7 @@ class PHPExcel_Style_Alignment implements PHPExcel_IComparable
      * @return string
      */
     public function getVertical() {
-    	return $this->_vertical;
+    	return $this->propertyGetBound()->_vertical;
     }
     
     /**
@@ -167,7 +235,7 @@ class PHPExcel_Style_Alignment implements PHPExcel_IComparable
     	if ($pValue == '') {
     		$pValue = PHPExcel_Style_Alignment::VERTICAL_BOTTOM;
     	}
-    	$this->_vertical = $pValue;
+    	$this->propertyBeginBind()->_vertical = $pValue;
     }
     
     /**
@@ -176,7 +244,7 @@ class PHPExcel_Style_Alignment implements PHPExcel_IComparable
      * @return int
      */
     public function getTextRotation() {
-    	return $this->_textRotation;
+    	return $this->propertyGetBound()->_textRotation;
     }
     
     /**
@@ -193,7 +261,7 @@ class PHPExcel_Style_Alignment implements PHPExcel_IComparable
 
 	// Set rotation
     	if ( ($pValue >= -90 && $pValue <= 90) || $pValue == -165 ) {
-    		$this->_textRotation = $pValue;
+    		$this->propertyBeginBind()->_textRotation = $pValue;
     	} else {
     		throw new Exception("Text rotation should be a value between -90 and 90.");
     	}
@@ -205,7 +273,7 @@ class PHPExcel_Style_Alignment implements PHPExcel_IComparable
      * @return boolean
      */
     public function getWrapText() {
-    	return $this->_wrapText;
+    	return $this->propertyGetBound()->_wrapText;
     }
     
     /**
@@ -217,7 +285,7 @@ class PHPExcel_Style_Alignment implements PHPExcel_IComparable
     	if ($pValue == '') {
     		$pValue = false;
     	}
-    	$this->_wrapText = $pValue;
+    	$this->propertyBeginBind()->_wrapText = $pValue;
     }
 
 	/**
@@ -226,11 +294,12 @@ class PHPExcel_Style_Alignment implements PHPExcel_IComparable
 	 * @return string	Hash code
 	 */	
 	public function getHashCode() {
+		$property = $this->propertyGetBound();
     	return md5(
-    		  $this->_horizontal
-    		. $this->_vertical
-    		. $this->_textRotation
-    		. ($this->_wrapText ? 't' : 'f')
+    		  $property->_horizontal
+    		. $property->_vertical
+    		. $property->_textRotation
+    		. ($property->_wrapText ? 't' : 'f')
     		. __CLASS__
     	);
     }

@@ -22,7 +22,7 @@
  * @package    PHPExcel
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -206,6 +206,7 @@ class PHPExcel_ReferenceHelper
 				$objColumnDimension->setColumnIndex($newReference);
 			}
 		}
+		$pSheet->refreshColumnDimensions();
 			
 			
 		// Update worksheet: breaks
@@ -446,22 +447,27 @@ class PHPExcel_ReferenceHelper
 			$newRow 	= 1;
 			list($newColumn, $newRow) = PHPExcel_Cell::coordinateFromString( $pCellReference );
 			
-			// Should this cell be updated?
-			if ( (PHPExcel_Cell::columnIndexFromString($newColumn) >= PHPExcel_Cell::columnIndexFromString($beforeColumn)) &&
-				 ($newRow >= $beforeRow) ) {
-				 	
-				// Create new column reference
+			// Verify which parts should be updated
+			$updateColumn = (PHPExcel_Cell::columnIndexFromString($newColumn) >= PHPExcel_Cell::columnIndexFromString($beforeColumn))
+							&& (strpos($newColumn, '$') === false)
+							&& (strpos($beforeColumn, '$') === false);
+			
+			$updateRow = ($newRow >= $beforeRow)
+							&& (strpos($newRow, '$') === false) 
+							&& (strpos($beforeRow, '$') === false);
+				
+			// Create new column reference
+			if ($updateColumn) {
 				$newColumn 	= PHPExcel_Cell::stringFromColumnIndex( PHPExcel_Cell::columnIndexFromString($newColumn) - 1 + $pNumCols );
-					 	
-				// Create new row reference
-				$newRow 	= $newRow + $pNumRows;
-				
-				// Return new reference
-				return $newColumn . $newRow;
-				
-			} else {
-				return $pCellReference;					
 			}
+			 	
+			// Create new row reference
+			if ($updateRow) {
+				$newRow 	= $newRow + $pNumRows;
+			}
+				
+			// Return new reference
+			return $newColumn . $newRow;
     	} else {
     		throw new Exception("Only single cell references may be passed to this method.");
     	}

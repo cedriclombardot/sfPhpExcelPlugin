@@ -22,7 +22,7 @@
  * @package    PHPExcel_Style
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -46,6 +46,7 @@ class PHPExcel_Style_Conditional implements PHPExcel_IComparable
 	const CONDITION_NONE					= 'none';
 	const CONDITION_CELLIS					= 'cellIs';
 	const CONDITION_CONTAINSTEXT			= 'containsText';
+	const CONDITION_EXPRESSION 				= 'expression';
 	
 	/* Operator types */
 	const OPERATOR_NONE						= '';

@@ -22,7 +22,7 @@
  * @package    PHPExcel_Style
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -72,6 +72,20 @@ class PHPExcel_Style_Border implements PHPExcel_IComparable
 	 */
 	private $_borderColor;
 	
+	/**
+	 * Parent
+	 *
+	 * @var PHPExcel_Style_Borders
+	 */
+	private $_parent;
+	
+	/**
+	 * Parent Property Name
+	 *
+	 * @var string
+	 */
+	private $_parentPropertyName;
+		
     /**
      * Create a new PHPExcel_Style_Border
      */
@@ -81,7 +95,108 @@ class PHPExcel_Style_Border implements PHPExcel_IComparable
 		$this->_borderStyle			= PHPExcel_Style_Border::BORDER_NONE;
 		$this->_borderColor			= new PHPExcel_Style_Color(PHPExcel_Style_Color::COLOR_BLACK);
     }
+
+	/**
+	 * Property Prepare bind
+	 *
+	 * Configures this object for late binding as a property of a parent object
+	 *	 
+	 * @param $parent
+	 * @param $parentPropertyName
+	 */
+	public function propertyPrepareBind($parent, $parentPropertyName)
+	{
+		// Initialize parent PHPExcel_Style for late binding. This relationship purposely ends immediately when this object
+		// is bound to the PHPExcel_Style object pointed to so as to prevent circular references.
+		$this->_parent		 		= $parent;
+		$this->_parentPropertyName	= $parentPropertyName;
+	}
     
+    /**
+     * Property Get Bound
+     *
+     * Returns the PHPExcel_Style_Border that is actual bound to PHPExcel_Style_Borders
+	 *
+	 * @return PHPExcel_Style_Border
+     */
+	private function propertyGetBound() {
+		if(!isset($this->_parent))
+			return $this;																// I am bound
+
+		if($this->_parent->propertyIsBound($this->_parentPropertyName))
+		{
+			switch($this->_parentPropertyName)											// Another one is bound
+			{
+				case "_left":
+					return $this->_parent->getLeft();		
+
+				case "_right":
+					return $this->_parent->getRight();		
+
+				case "_top":
+					return $this->_parent->getTop();	
+					
+				case "_bottom":
+					return $this->_parent->getBottom();
+
+				case "_diagonal":
+					return $this->_parent->getDiagonal();	
+
+				case "_vertical":
+					return $this->_parent->getVertical();
+
+				case "_horizontal":
+					return $this->_parent->getHorizontal();
+			}
+		}
+
+		return $this;																	// No one is bound yet
+	}
+	
+	/**
+     * Property Begin Bind
+     *
+     * If no PHPExcel_Style_Border has been bound to PHPExcel_Style_Borders then bind this one. Return the actual bound one.
+	 *
+	 * @return PHPExcel_Style_Border
+     */
+	private function propertyBeginBind() {
+	
+		if(!isset($this->_parent))
+			return $this;																// I am already bound
+
+		if($this->_parent->propertyIsBound($this->_parentPropertyName))
+		{
+			switch($this->_parentPropertyName)											// Another one is already bound
+			{
+				case "_left":
+					return $this->_parent->getLeft();		
+
+				case "_right":
+					return $this->_parent->getRight();		
+
+				case "_top":
+					return $this->_parent->getTop();	
+					
+				case "_bottom":
+					return $this->_parent->getBottom();
+
+				case "_diagonal":
+					return $this->_parent->getDiagonal();	
+
+				case "_vertical":
+					return $this->_parent->getVertical();
+
+				case "_horizontal":
+					return $this->_parent->getHorizontal();
+			}
+		}
+			
+		$this->_parent->propertyCompleteBind($this, $this->_parentPropertyName);		// Bind myself
+		$this->_parent = null;
+		return $this;
+	}
+        
     /**
      * Apply styles from array
      * 
@@ -118,7 +233,7 @@ class PHPExcel_Style_Border implements PHPExcel_IComparable
      * @return string
      */
     public function getBorderStyle() {
-    	return $this->_borderStyle;
+    	return $this->propertyGetBound()->_borderStyle;
     }
     
     /**
@@ -127,10 +242,11 @@ class PHPExcel_Style_Border implements PHPExcel_IComparable
      * @param string $pValue
      */
     public function setBorderStyle($pValue = PHPExcel_Style_Border::BORDER_NONE) {
+    
         if ($pValue == '') {
     		$pValue = PHPExcel_Style_Border::BORDER_NONE;
     	}
-    	$this->_borderStyle = $pValue;
+    	$this->propertyBeginBind()->_borderStyle = $pValue;
     }
     
     /**
@@ -139,7 +255,9 @@ class PHPExcel_Style_Border implements PHPExcel_IComparable
      * @return PHPExcel_Style_Color
      */
     public function getColor() {
-    	return $this->_borderColor;
+    	// It's a get but it may lead to a modified color which we won't detect but in which case we must bind.
+    	// So bind as an assurance.
+    	return $this->propertyBeginBind()->_borderColor;
     }
     
     /**
@@ -149,7 +267,7 @@ class PHPExcel_Style_Border implements PHPExcel_IComparable
      * @throws 	Exception
      */
     public function setColor(PHPExcel_Style_Color $pValue = null) {
-   		$this->_borderColor = $pValue;
+   		$this->propertyBeginBind()->_borderColor = $pValue;
     }
     
 	/**
@@ -158,9 +276,10 @@ class PHPExcel_Style_Border implements PHPExcel_IComparable
 	 * @return string	Hash code
 	 */	
 	public function getHashCode() {
+		$property = $this->propertyGetBound();
     	return md5(
-    		  $this->_borderStyle
-    		. $this->_borderColor->getHashCode()
+    		  $property->_borderStyle
+    		. $property->_borderColor->getHashCode()
     		. __CLASS__
     	);
     }

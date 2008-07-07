@@ -22,7 +22,7 @@
  * @package    PHPExcel_Writer
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -351,7 +351,23 @@ class PHPExcel_Writer_Excel2007 implements PHPExcel_Writer_IWriter
 			// Add media
 			for ($i = 0; $i < $this->getDrawingHashTable()->count(); $i++) {
 				if ($this->getDrawingHashTable()->getByIndex($i) instanceof PHPExcel_Worksheet_Drawing) {
-					$objZip->addFromString('xl/media/' . $this->getDrawingHashTable()->getByIndex($i)->getFilename(), file_get_contents($this->getDrawingHashTable()->getByIndex($i)->getPath()));
+					$imageContents = null;
+					$imagePath = $this->getDrawingHashTable()->getByIndex($i)->getPath();
+					
+					if (strpos($imagePath, 'zip://') !== false) {
+						$imagePath = substr($imagePath, 6);
+						$imagePathSplitted = explode('#', $imagePath);
+						
+						$imageZip = new ZipArchive();
+						$imageZip->open($imagePathSplitted[0]);
+						$imageContents = $imageZip->getFromName($imagePathSplitted[1]);
+						$imageZip->close();
+						unset($imageZip);
+					} else {
+						$imageContents = file_get_contents($imagePath);
+					}
+					
+					$objZip->addFromString('xl/media/' . $this->getDrawingHashTable()->getByIndex($i)->getFilename(), $imageContents);
 				}
 				//The line underneath does not support adding a file from a ZIP archive, the line above does!
 				//$objZip->addFile($this->getDrawingHashTable()->getByIndex($i)->getPath(), 'xl/media/' . $this->getDrawingHashTable()->getByIndex($i)->getFilename());

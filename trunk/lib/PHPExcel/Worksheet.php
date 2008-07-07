@@ -22,7 +22,7 @@
  * @package    PHPExcel
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -70,6 +70,9 @@ require_once 'PHPExcel/Style.php';
 
 /** PHPExcel_Style_Fill */
 require_once 'PHPExcel/Style/Fill.php';
+
+/** PHPExcel_Style_NumberFormat */
+require_once 'PHPExcel/Style/NumberFormat.php';
 
 /** PHPExcel_IComparable */
 require_once 'PHPExcel/IComparable.php';
@@ -244,6 +247,13 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
 	 * @var PHPExcel_Comment[]
 	 */
 	private $_comments = array();
+
+	/**
+	 * Selected cell
+	 *
+	 * @var string
+	 */
+	private $_selectedCell = 'A1';
 	
 	/**
 	 * Create a new worksheet
@@ -333,6 +343,21 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
 		return $this->_drawingCollection;
 	}
 	
+	/**
+	 * Refresh column dimensions
+	 */
+	public function refreshColumnDimensions()
+	{
+		$currentColumnDimensions = $this->getColumnDimensions();
+		$newColumnDimensions = array();
+
+		foreach ($currentColumnDimensions as $objColumnDimension) {
+			$newColumnDimensions[$objColumnDimension->getColumnIndex()] = $objColumnDimension;
+		}
+
+		$this->_columnDimensions = $newColumnDimensions;
+	}
+	
     /**
      * Calculate worksheet dimension
      *
@@ -365,10 +390,10 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
 						$cellValue = ''; // do not calculate merge cells
 					}
 				}
-				
+
 				$autoSizes[$cell->getColumn()] = max(
-					$autoSizes[$cell->getColumn()],
-					PHPExcel_Shared_Font::calculateColumnWidth(
+					(float)$autoSizes[$cell->getColumn()],
+					(float)PHPExcel_Shared_Font::calculateColumnWidth(
 						$this->getStyle($cell->getCoordinate())->getFont()->getSize(),
 						false,
 						$cellValue
@@ -389,6 +414,23 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
      */
     public function getParent() {
     	return $this->_parent;
+    }
+	
+    /**
+     * Re-bind parent
+     *
+     * @param PHPExcel $parent
+     */
+    public function rebindParent(PHPExcel $parent) {
+		$namedRanges = $this->_parent->getNamedRanges();
+		foreach ($namedRanges as $namedRange) {
+			$parent->addNamedRange($namedRange);
+		}
+	
+		$this->_parent->removeSheetByIndex(
+			$this->_parent->getindex($this)
+		);
+		$this->_parent = $parent;
     }
     
 	/**
@@ -858,6 +900,54 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
     	return $this->getStyle(PHPExcel_Cell::stringFromColumnIndex($pColumn) . $pRow);
     }
     
+    /**
+     * Set shared cell style to a range of cells
+     *
+     * Please note that this will overwrite existing cell styles for cells in range!
+     *
+     * @param 	PHPExcel_Style	$pSharedCellStyle	Cell style to share
+     * @param 	string			$pRange				Range of cells (i.e. "A1:B10"), or just one cell (i.e. "A1")
+     * @throws	Exception
+     */
+     public function setSharedStyle(PHPExcel_Style $pSharedCellStyle = null, $pRange = '')
+    {
+    	// Uppercase coordinate
+    	$pRange = strtoupper($pRange);
+    	
+   		// Is it a cell range or a single cell?
+   		$rangeA 	= '';
+   		$rangeB 	= '';
+   		if (strpos($pRange, ':') === false) {
+   			$rangeA = $pRange;
+   			$rangeB = $pRange;
+   		} else {
+   			list($rangeA, $rangeB) = explode(':', $pRange);
+   		}
+    		
+   		// Calculate range outer borders
+   		$rangeStart = PHPExcel_Cell::coordinateFromString($rangeA);
+   		$rangeEnd 	= PHPExcel_Cell::coordinateFromString($rangeB);
+    		
+   		// Translate column into index
+   		$rangeStart[0]	= PHPExcel_Cell::columnIndexFromString($rangeStart[0]) - 1;
+   		$rangeEnd[0]	= PHPExcel_Cell::columnIndexFromString($rangeEnd[0]) - 1;
+    		
+   		// Make sure we can loop upwards on rows and columns
+   		if ($rangeStart[0] > $rangeEnd[0] && $rangeStart[1] > $rangeEnd[1]) {
+   			$tmp = $rangeStart;
+   			$rangeStart = $rangeEnd;
+   			$rangeEnd = $tmp;
+   		}
+    		   		
+   		// Loop trough cells and apply styles
+   		for ($col = $rangeStart[0]; $col <= $rangeEnd[0]; $col++) {
+   			for ($row = $rangeStart[1]; $row <= $rangeEnd[1]; $row++) {
+   				$this->getCell(PHPExcel_Cell::stringFromColumnIndex($col) . $row);
+   				$this->_styles[ PHPExcel_Cell::stringFromColumnIndex($col) . $row ] = $pSharedCellStyle;
+   			}
+   		}
+    }
+
     /**
      * Duplicate cell style to a range of cells
      *
@@ -1477,6 +1567,46 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
     {
     	return $this->getComment(PHPExcel_Cell::stringFromColumnIndex($pColumn) . $pRow);
     }
+
+    /**
+     * Get selected cell
+     *
+     * @return string
+     */
+    public function getSelectedCell()
+    {
+    	return $this->_selectedCell;
+    }
+    
+    /**
+     * Selected cell
+     *
+     * @param 	string		$pCell		Cell (i.e. A1)
+     * @throws 	Exception
+     */
+    public function setSelectedCell($pCell = '')
+    {
+    	// Uppercase coordinate
+    	$pCell = strtoupper($pCell);
+    	
+    	if (!eregi(':', $pCell)) {
+    		$this->_selectedCell = $pCell;
+    	} else {
+    		throw new Exception('Selected cell can not be set on a range of cells.');
+    	}
+    }
+    
+    /**
+     * Selected cell by using numeric cell coordinates
+     *
+     * @param 	int 	$pColumn	Numeric column coordinate of the cell
+     * @param 	int 	$pRow		Numeric row coordinate of the cell
+     * @throws 	Exception
+     */
+    public function setSelectedCellByColumnAndRow($pColumn = 0, $pRow = 0)
+    {
+    	$this->setSelectedCell(PHPExcel_Cell::stringFromColumnIndex($pColumn) . $pRow);
+    }
     
     /**
      * Fill worksheet from values in array
@@ -1533,20 +1663,29 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
     		for ($column = $dimension[0][0]; $column <= $dimension[1][0]; $column++) {
     			// Cell exists?
     			if ($this->cellExistsByColumnAndRow($column, $row)) {
-    				if ($this->getCellByColumnAndRow($column, $row)->getValue() instanceof PHPExcel_RichText) {
-    					$returnValue[$row][$column] = $this->getCellByColumnAndRow($column, $row)->getValue()->getPlainText();
+    				$cell = $this->getCellByColumnAndRow($column, $row);
+    				
+    				if ($cell->getValue() instanceof PHPExcel_RichText) {
+    					$returnValue[$row][$column] = $cell->getValue()->getPlainText();
     				} else {
 	    				if ($calculateFormulas) {
-	    					$returnValue[$row][$column] = $this->getCellByColumnAndRow($column, $row)->getCalculatedValue();
+	    					$returnValue[$row][$column] = $cell->getCalculatedValue();
 	    				} else {
-	    					$returnValue[$row][$column] = $this->getCellByColumnAndRow($column, $row)->getValue();
+	    					$returnValue[$row][$column] = $cell->getValue();
 	    				}
     				}
+    				
+    				$style = $this->getDefaultStyle();
+    				if (isset($this->_styles[$cell->getCoordinate()])) {
+    					$style = $this->getStyleByColumnAndRow($column, $row);
+    				}
+
+    				$returnValue[$row][$column] = PHPExcel_Style_NumberFormat::toFormattedString($returnValue[$row][$column], $style->getNumberFormat()->getFormatCode());
     			} else {
     				$returnValue[$row][$column] = $nullValue;
     			}
     		}	
-    	}	
+    	}
     	
     	// Return
     	return $returnValue;
@@ -1556,6 +1695,15 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
      * Run PHPExcel garabage collector.
      */
     public function garbageCollect() {
+    	// Build a reference table from images
+    	$imageCoordinates = array();	
+  		$iterator = $this->getDrawingCollection()->getIterator();
+   		while ($iterator->valid()) {
+   			$imageCoordinates[$iterator->current()->getCoordinates()] = true;
+
+   			$iterator->next();
+   		}
+    	
     	// Find cells that can be cleaned
     	foreach ($this->_cellCollection as $coordinate => $cell) {
     		// Can be cleaned?
@@ -1571,13 +1719,8 @@ class PHPExcel_Worksheet implements PHPExcel_IComparable
     		}
     		
     		// Referenced in image?
-    		$iterator = $this->getDrawingCollection()->getIterator();
-    		while ($iterator->valid()) {
-    			if ($iterator->current()->getCoordinates() == $coordinate) {
-    				$canBeCleaned = false;
-    			}
-    			
-    			$iterator->next();
+    		if (isset($imageCoordinates[$coordinate]) && $imageCoordinates[$coordinate] === true) {
+    			$canBeCleaned = false;	
     		}
     		
     		// Clean?

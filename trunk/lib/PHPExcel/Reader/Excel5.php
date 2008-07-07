@@ -22,7 +22,7 @@
  * @package    PHPExcel_Reader
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 // Original file header of ParseXL (used as the base for this class):
@@ -67,52 +67,6 @@ require_once 'PHPExcel/Reader/IReader.php';
 require_once 'PHPExcel/Shared/OLERead.php';
 
 
-// ParseXL definitions
-define('XLS_BIFF8', 0x600);
-define('XLS_BIFF7', 0x500);
-define('XLS_WorkbookGlobals', 0x5);
-define('XLS_Worksheet', 0x10);
-
-define('XLS_Type_BOF', 0x809);
-define('XLS_Type_EOF', 0x0a);
-define('XLS_Type_BOUNDSHEET', 0x85);
-define('XLS_Type_DIMENSION', 0x200);
-define('XLS_Type_ROW', 0x208);
-define('XLS_Type_DBCELL', 0xd7);
-define('XLS_Type_FILEPASS', 0x2f);
-define('XLS_Type_NOTE', 0x1c);
-define('XLS_Type_TXO', 0x1b6);
-define('XLS_Type_RK', 0x7e);
-define('XLS_Type_RK2', 0x27e);
-define('XLS_Type_MULRK', 0xbd);
-define('XLS_Type_MULBLANK', 0xbe);
-define('XLS_Type_INDEX', 0x20b);
-define('XLS_Type_SST', 0xfc);
-define('XLS_Type_EXTSST', 0xff);
-define('XLS_Type_CONTINUE', 0x3c);
-define('XLS_Type_LABEL', 0x204);
-define('XLS_Type_LABELSST', 0xfd);
-define('XLS_Type_NUMBER', 0x203);
-define('XLS_Type_EXTSHEET', 0x17);
-define('XLS_Type_NAME', 0x18);
-define('XLS_Type_ARRAY', 0x221);
-define('XLS_Type_STRING', 0x207);
-define('XLS_Type_FORMULA', 0x406);
-define('XLS_Type_FORMULA2', 0x6);
-define('XLS_Type_FORMAT', 0x41e);
-define('XLS_Type_XF', 0xe0);
-define('XLS_Type_BOOLERR', 0x205);
-define('XLS_Type_UNKNOWN', 0xffff);
-define('XLS_Type_NINETEENFOUR', 0x22);
-define('XLS_Type_MERGEDCELLS', 0xe5);
-define('XLS_Type_CODEPAGE',0x42);
-
-define('XLS_utcOffsetDays' , 25569);
-define('XLS_utcOffsetDays1904', 24107);
-define('XLS_SecInADay', 24 * 60 * 60);
-
-define('XLS_DEF_NUM_FORMAT', "%s");
-
 /**
  * PHPExcel_Reader_Excel5
  *
@@ -124,25 +78,71 @@ define('XLS_DEF_NUM_FORMAT', "%s");
  */
 class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 {
-	var $_boundsheets = array();
-	var $_formatRecords = array();
-	var $_sst = array();
-	var $_sheets = array();
-	// dvc: added list of names and their sheet associated indexes
-	var $_namedcells = array();
-	var $_data;
-	var $_pos;
-	var $_ole;
-	var $_defaultEncoding;
-	var $_codepage;
-	var $_defaultFormat = XLS_DEF_NUM_FORMAT;
-	var $_columnsFormat = array();
-	var $_rowoffset = 1;
-	var $_coloffset = 1;
-	// dvc: added for external sheets references
-	var $_extshref = array();
+	// ParseXL definitions
+	const XLS_BIFF8 = 0x600;
+	const XLS_BIFF7 = 0x500;
+	const XLS_WorkbookGlobals = 0x5;
+	const XLS_Worksheet = 0x10;
+	
+	const XLS_Type_BOF = 0x809;
+	const XLS_Type_EOF = 0x0a;
+	const XLS_Type_BOUNDSHEET = 0x85;
+	const XLS_Type_DIMENSION = 0x200;
+	const XLS_Type_ROW = 0x208;
+	const XLS_Type_DBCELL = 0xd7;
+	const XLS_Type_FILEPASS = 0x2f;
+	const XLS_Type_NOTE = 0x1c;
+	const XLS_Type_TXO = 0x1b6;
+	const XLS_Type_RK = 0x7e;
+	const XLS_Type_RK2 = 0x27e;
+	const XLS_Type_MULRK = 0xbd;
+	const XLS_Type_MULBLANK = 0xbe;
+	const XLS_Type_INDEX = 0x20b;
+	const XLS_Type_SST = 0xfc;
+	const XLS_Type_EXTSST = 0xff;
+	const XLS_Type_CONTINUE = 0x3c;
+	const XLS_Type_LABEL = 0x204;
+	const XLS_Type_LABELSST = 0xfd;
+	const XLS_Type_NUMBER = 0x203;
+	const XLS_Type_EXTSHEET = 0x17;
+	const XLS_Type_NAME = 0x18;
+	const XLS_Type_ARRAY = 0x221;
+	const XLS_Type_STRING = 0x207;
+	const XLS_Type_FORMULA = 0x406;
+	const XLS_Type_FORMULA2 = 0x6;
+	const XLS_Type_FORMAT = 0x41e;
+	const XLS_Type_XF = 0xe0;
+	const XLS_Type_BOOLERR = 0x205;
+	const XLS_Type_UNKNOWN = 0xffff;
+	const XLS_Type_NINETEENFOUR = 0x22;
+	const XLS_Type_MERGEDCELLS = 0xe5;
+	const XLS_Type_CODEPAGE = 0x42;
+	
+	const XLS_utcOffsetDays = 25569;
+	const XLS_utcOffsetDays1904 = 24107;
+	const XLS_SecInADay = 86400;
+	
+	const XLS_DEF_NUM_FORMAT = "%s";
 
-	var $_dateFormats = array (
+	private $_boundsheets = array();
+	private $_formatRecords = array();
+	private $_sst = array();
+	private $_sheets = array();
+	// dvc: added list of names and their sheet associated indexes
+	private $_namedcells = array();
+	private $_data;
+	private $_pos;
+	private $_ole;
+	private $_defaultEncoding;
+	private $_codepage;
+	private $_defaultFormat = self::XLS_DEF_NUM_FORMAT;
+	private $_columnsFormat = array();
+	private $_rowoffset = 1;
+	private $_coloffset = 1;
+	// dvc: added for external sheets references
+	private $_extshref = array();
+
+	private $_dateFormats = array (
 		// dvc: fixed known date formats
 		0xe => 'd/m/Y',
 		0xf => 'd-M-y',
@@ -159,13 +159,13 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 	);
 
 	// dvc: separated percent formats
-	var $_percentFormats = array(
+	private $_percentFormats = array(
 		0x9 => '%1.0f%%',
 		0xa => '%1.2f%%'
 	);
 
 	// dvc: removed exponentials to format as default strings.
-	var $_numberFormats = array(
+	private $_numberFormats = array(
 		0x1 => '%1.0f',
 		0x2 => '%1.2f',
 		0x3 => '%1.0f',
@@ -202,7 +202,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 		$excel->removeSheetByIndex(0);
 
 		// Use ParseXL for the hard work.
-		$this->_ole =& new PHPExcel_Shared_OLERead();
+		$this->_ole = new PHPExcel_Shared_OLERead();
 
 		$this->_rowoffset = $this->_coloffset = 0;
 		$this->_defaultEncoding = 'ISO-8859-1';
@@ -213,7 +213,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 		$this->_read($pFilename);
 
 		foreach($this->_boundsheets as $index => $details) {
-			$sheet = &$excel->createSheet();
+			$sheet = $excel->createSheet();
 			$sheet->setTitle((string) $details['name']);
 
 			// read all the columns of all the rows !
@@ -221,9 +221,16 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 			$numcols = $this->_sheets[$index]['numCols'];
 			for ($row = 0; $row < $numrows; $row++) {
 				for ($col = 0; $col < $numcols; $col++) {
-					@$cellcontent = $this->_sheets[$index]['cells'][$row][$col];
-					@$cellinfo = $this->_sheets[$index]['cellsInfo'][$row][$col];
-					if(is_null($cellcontent)) continue;
+					$cellcontent = $cellinfo = null;
+					if (isset($this->_sheets[$index]['cells'][$row][$col])===true) {
+						$cellcontent = $this->_sheets[$index]['cells'][$row][$col];
+					} else {
+						continue;
+					}
+					
+					if (isset($this->_sheets[$index]['cellsInfo'][$row][$col])===true) {
+						$cellinfo = $this->_sheets[$index]['cellsInfo'][$row][$col];
+					}
 
 					$sheet->setCellValueByColumnAndRow($col, $row + 1,
 						$cellcontent);
@@ -275,19 +282,19 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 		$substreamType = ord($this->_data[$pos + 6]) | ord($this->_data[$pos + 7]) << 8;
 
 
-		if (($version != XLS_BIFF8) && ($version != XLS_BIFF7)) {
+		if (($version != self::XLS_BIFF8) && ($version != self::XLS_BIFF7)) {
 			return false;
 		}
-		if ($substreamType != XLS_WorkbookGlobals){
+		if ($substreamType != self::XLS_WorkbookGlobals){
 			return false;
 		}
 		$pos += $length + 4;
 		$code = ord($this->_data[$pos]) | ord($this->_data[$pos + 1]) << 8;
 
 		$length = ord($this->_data[$pos + 2]) | ord($this->_data[$pos + 3]) << 8;
-		while ($code != XLS_Type_EOF){
+		while ($code != self::XLS_Type_EOF){
 			switch ($code) {
-				case XLS_Type_SST:
+				case self::XLS_Type_SST:
 					/**
 					 * SST - Shared String Table
 					 *
@@ -390,7 +397,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 						//	$retstr : $this->_encodeUTF16($retstr);
 						// convert string according codepage and BIFF version
 
-						if($version == XLS_BIFF8) {
+						if($version == self::XLS_BIFF8) {
 							$retstr = $this->_encodeUTF16($retstr, $asciiEncoding);
 
 						} else {
@@ -408,7 +415,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					}
 					break;
 
-				case XLS_Type_FILEPASS:
+				case self::XLS_Type_FILEPASS:
 					/**
 					 * SHEETPROTECTION
 					 *
@@ -423,9 +430,9 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					return false;
 					break;
 
-				case XLS_Type_EXTSHEET:
+				case self::XLS_Type_EXTSHEET:
 					// external sheet references provided for named cells
-					if ($version == XLS_BIFF8) {
+					if ($version == self::XLS_BIFF8) {
 						$xpos = $pos + 4;
 						$xcnt = ord($this->_data[$xpos]) | ord($this->_data[$xpos + 1]) << 8;
 						for ($x = 0; $x < $xcnt; $x++) {
@@ -436,7 +443,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					//print_r($this->_extshref);
 					break;
 
-				case XLS_Type_NAME:
+				case self::XLS_Type_NAME:
 					/**
 					 * DEFINEDNAME
 					 *
@@ -473,7 +480,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					}
 					break;
 
-				case XLS_Type_FORMAT:
+				case self::XLS_Type_FORMAT:
 					/**
 					 * FORMAT
 					 *
@@ -489,7 +496,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					 * 		Excel File Format"
 					 */
 					$indexCode = ord($this->_data[$pos + 4]) | ord($this->_data[$pos + 5]) << 8;
-					if ($version == XLS_BIFF8) {
+					if ($version == self::XLS_BIFF8) {
 						$numchars = ord($this->_data[$pos + 6]) | ord($this->_data[$pos + 7]) << 8;
 						if (ord($this->_data[$pos + 8]) == 0){
 							$formatString = substr($this->_data, $pos + 9, $numchars);
@@ -504,9 +511,9 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 
 					break;
 
-				case XLS_Type_XF:
+				case self::XLS_Type_XF:
 					/**
-					 * XF – Extended Format
+					 * XF - Extended Format
 					 *
 					 * This record contains formatting information for cells,
 					 * rows, columns or styles.
@@ -630,7 +637,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					}
 					break;
 
-				case XLS_Type_NINETEENFOUR:
+				case self::XLS_Type_NINETEENFOUR:
 					/**
 					 * DATEMODE
 					 *
@@ -646,7 +653,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					$this->_nineteenFour = (ord($this->_data[$pos + 4]) == 1);
 					break;
 
-				case XLS_Type_BOUNDSHEET:
+				case self::XLS_Type_BOUNDSHEET:
 					/**
 					 * SHEET
 					 *
@@ -666,11 +673,11 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 
 
 
-					if ($version == XLS_BIFF8) {
+					if ($version == self::XLS_BIFF8) {
 						$compressedUTF16 = ((ord($this->_data[$pos + 11]) & 0x01) == 0);
 						$rec_length = ($compressedUTF16) ? $rec_length : $rec_length*2;
 						$rec_name = $this->_encodeUTF16(substr($this->_data, $pos + 12, $rec_length), $compressedUTF16);
-					} elseif ($version == XLS_BIFF7) {
+					} elseif ($version == self::XLS_BIFF7) {
 						$rec_name		= substr($this->_data, $pos + 11, $rec_length);
 					}
 					$this->_boundsheets[] = array(
@@ -679,7 +686,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					);
 					break;
 
-				case XLS_Type_CODEPAGE:
+				case self::XLS_Type_CODEPAGE:
 					/**
 					 * CODEPAGE
 					 *
@@ -831,17 +838,17 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 		$version = ord($this->_data[$spos + 4]) | ord($this->_data[$spos + 5]) << 8;
 		$substreamType = ord($this->_data[$spos + 6]) | ord($this->_data[$spos + 7]) << 8;
 
-		if (($version != XLS_BIFF8) && ($version != XLS_BIFF7)) {
+		if (($version != self::XLS_BIFF8) && ($version != self::XLS_BIFF7)) {
 			return -1;
 		}
-		if ($substreamType != XLS_Worksheet) {
+		if ($substreamType != self::XLS_Worksheet) {
 			return -2;
 		}
 
 		$spos += $length + 4;
 		while($cont) {
 			$lowcode = ord($this->_data[$spos]);
-			if ($lowcode == XLS_Type_EOF) {
+			if ($lowcode == self::XLS_Type_EOF) {
 				break;
 			}
 
@@ -856,7 +863,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 			$this->_multiplier = 1; // need for format with %
 
 			switch ($code) {
-				case XLS_Type_DIMENSION:
+				case self::XLS_Type_DIMENSION:
 					/**
 					 * DIMENSION
 					 *
@@ -867,7 +874,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					 * 		Excel File Format"
 					 */
 					if (!isset($this->_numRows)) {
-						if (($length == 10) ||	($version == XLS_BIFF7)){
+						if (($length == 10) ||	($version == self::XLS_BIFF7)){
 							$this->_sheets[$this->_sn]['numRows'] = ord($this->_data[$spos + 2]) | ord($this->_data[$spos + 3]) << 8;
 							$this->_sheets[$this->_sn]['numCols'] = ord($this->_data[$spos + 6]) | ord($this->_data[$spos + 7]) << 8;
 						} else {
@@ -877,7 +884,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					}
 					break;
 
-				case XLS_Type_MERGEDCELLS:
+				case self::XLS_Type_MERGEDCELLS:
 					/**
 					 * MERGEDCELLS
 					 *
@@ -904,8 +911,8 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					}
 					break;
 
-				case XLS_Type_RK:
-				case XLS_Type_RK2:
+				case self::XLS_Type_RK:
+				case self::XLS_Type_RK2:
 					/**
 					 * RK
 					 *
@@ -935,7 +942,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					$this->_addcell($row, $column, $string, $raw);
 					break;
 
-				case XLS_Type_LABELSST:
+				case self::XLS_Type_LABELSST:
 					/**
 					 * LABELSST
 					 *
@@ -953,9 +960,9 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					$this->_addcell($row, $column, $this->_sst[$index]);
 					break;
 
-				case XLS_Type_MULRK:
+				case self::XLS_Type_MULRK:
 					/**
-					 * MULRK – Multiple RK
+					 * MULRK - Multiple RK
 					 *
 					 * This record represents a cell range containing RK value
 					 * cells. All cells are located in the same row.
@@ -986,7 +993,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					}
 					break;
 
-				case XLS_Type_NUMBER:
+				case self::XLS_Type_NUMBER:
 					/**
 					 * NUMBER
 					 *
@@ -1012,8 +1019,8 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					$this->_addcell($row, $column, $string, $raw);
 					break;
 
-				case XLS_Type_FORMULA:
-				case XLS_Type_FORMULA2:
+				case self::XLS_Type_FORMULA:
+				case self::XLS_Type_FORMULA2:
 					/**
 					 * FORMULA
 					 *
@@ -1036,7 +1043,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 						$scode = ord($this->_data[$soff]) | ord($this->_data[$soff + 1])<<8;
 						$sopt = ord($this->_data[$soff + 6]);
 						// only reads byte strings...
-						if ($scode == XLS_Type_STRING && $sopt == '0') {
+						if ($scode == self::XLS_Type_STRING && $sopt == '0') {
 							$slen = ord($this->_data[$soff + 4]) | ord($this->_data[$soff + 5]) << 8;
 							$string = substr($this->_data, $soff + 7, ord($this->_data[$soff + 4]) | ord($this->_data[$soff + 5]) << 8);
 						} else {
@@ -1097,7 +1104,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					$this->_addcell($row, $column, $string, $raw);
 					break;
 
-				case XLS_Type_BOOLERR:
+				case self::XLS_Type_BOOLERR:
 					/**
 					 * BOOLERR
 					 *
@@ -1113,7 +1120,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					$this->_addcell($row, $column, $string);
 					break;
 
-				case XLS_Type_ROW:
+				case self::XLS_Type_ROW:
 					/**
 					 * ROW
 					 *
@@ -1124,7 +1131,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					 * --	"OpenOffice.org's Documentation of the Microsoft
 					 * 		Excel File Format"
 					 */
-				case XLS_Type_DBCELL:
+				case self::XLS_Type_DBCELL:
 					/**
 					 * DBCELL
 					 *
@@ -1137,9 +1144,9 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					 * --	"OpenOffice.org's Documentation of the Microsoft
 					 * 		Excel File Format"
 					 */
-				case XLS_Type_MULBLANK:
+				case self::XLS_Type_MULBLANK:
 					/**
-					 * MULBLANK – Multiple BLANK
+					 * MULBLANK - Multiple BLANK
 					 *
 					 * This record represents a cell range of empty cells. All
 					 * cells are located in the same row
@@ -1149,7 +1156,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 					 */
 					break;
 
-				case XLS_Type_LABEL:
+				case self::XLS_Type_LABEL:
 					/**
 					 * LABEL
 					 *
@@ -1167,7 +1174,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 						ord($this->_data[$spos + 6]) | ord($this->_data[$spos + 7]) << 8));
 					break;
 
-				case XLS_Type_EOF:
+				case self::XLS_Type_EOF:
 					$cont = false;
 					break;
 
@@ -1211,8 +1218,8 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 	private function _createDate($numValue)
 	{
 		if ($numValue > 1){
-			$utcDays = $numValue - ($this->_nineteenFour ? XLS_utcOffsetDays1904 : XLS_utcOffsetDays);
-			$utcValue = round(($utcDays * XLS_SecInADay));
+			$utcDays = $numValue - ($this->_nineteenFour ? self::XLS_utcOffsetDays1904 : self::XLS_utcOffsetDays);
+			$utcValue = round(($utcDays * self::XLS_SecInADay));
 			// dvc: excel returns local date/time as absolutes,
 			// i.e. 1 hr = 0.04166, 1 day = 1,
 			// so need to treat as GMT to translate
@@ -1223,7 +1230,7 @@ class PHPExcel_Reader_Excel5 implements PHPExcel_Reader_IReader
 			$raw = $numValue;
 			$hours = round($numValue * 24);
 			$mins = round($numValue * 24*60) - $hours * 60;
-			$secs = round($numValue * XLS_SecInADay) - $hours *60*60 - $mins * 60;
+			$secs = round($numValue * self::XLS_SecInADay) - $hours *60*60 - $mins * 60;
 			$string = date ($this->_curformat, mktime($hours, $mins, $secs));
 		}
 		return array($string, $raw);

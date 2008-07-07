@@ -8,21 +8,21 @@
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
- * 
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * @category   PHPExcel
- * @package    PHPExcel_Writer
+ * @package	PHPExcel_Writer
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
- * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @license	http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
+ * @version	1.6.2, 2008-06-23
  */
 
 
@@ -43,7 +43,7 @@ require_once 'PHPExcel/RichText.php';
  * PHPExcel_Writer_Excel5
  *
  * @category   PHPExcel
- * @package    PHPExcel_Writer
+ * @package	PHPExcel_Writer
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  */
 class PHPExcel_Writer_Excel5 implements PHPExcel_Writer_IWriter {
@@ -53,39 +53,39 @@ class PHPExcel_Writer_Excel5 implements PHPExcel_Writer_IWriter {
 	 * @var PHPExcel
 	 */
 	private $_phpExcel;
-	
+
 	/**
 	 * Temporary storage directory
 	 *
 	 * @var string
 	 */
 	private $_tempDir = '';
-	
+
 	/**
 	 * Color cache
 	 */
 	private $_colors = array();
-	
+
 	/**
 	 * Create a new PHPExcel_Writer_Excel5
 	 *
-	 * @param 	PHPExcel	$phpExcel	PHPExcel object
+	 * @param	PHPExcel	$phpExcel	PHPExcel object
 	 */
 	public function __construct(PHPExcel $phpExcel) {
-		$this->_phpExcel 	= $phpExcel;
+		$this->_phpExcel	= $phpExcel;
 		$this->_tempDir		= '';
-		$this->_colors 		= array();
+		$this->_colors		= array();
 	}
-	
+
 	/**
 	 * Save PHPExcel to file
 	 *
-	 * @param 	string 		$pFileName
-	 * @throws 	Exception
-	 */	
+	 * @param	string		$pFileName
+	 * @throws	Exception
+	 */
 	public function save($pFilename = null) {
-		$this->_colors 		= array();
-		
+		$this->_colors		= array();
+
 		$phpExcel = $this->_phpExcel;
 		$workbook = new PHPExcel_Writer_Excel5_Writer($pFilename);
 		$workbook->setVersion(8);
@@ -94,73 +94,74 @@ class PHPExcel_Writer_Excel5 implements PHPExcel_Writer_IWriter {
 		if ($this->_tempDir != '') {
 			$workbook->setTempDir($this->_tempDir);
 		}
-		
-		// Create empty style
-		$emptyStyle = new PHPExcel_Style();
-			
+
+
 		// Add empty sheets
 		foreach ($phpExcel->getSheetNames() as $sheetIndex => $sheetName) {
 			$phpSheet  = $phpExcel->getSheet($sheetIndex);
 			$worksheet = $workbook->addWorksheet($sheetName);
 		}
 		$allWorksheets = $workbook->worksheets();
-		
+
 		// Add full sheet data
 		foreach ($phpExcel->getSheetNames() as $sheetIndex => $sheetName) {
 			$phpSheet  = $phpExcel->getSheet($sheetIndex);
 			$worksheet = $allWorksheets[$sheetIndex];
 			$worksheet->setInputEncoding("UTF-8");
-			
+
+			// Default style
+			$emptyStyle = $phpSheet->getDefaultStyle();
+
 			$aStyles = $phpSheet->getStyles();
-			
+
 			$freeze = $phpSheet->getFreezePane();
 			if ($freeze) {
 				list($column, $row) = PHPExcel_Cell::coordinateFromString($freeze);
 				$worksheet->freezePanes(array($row - 1, PHPExcel_Cell::columnIndexFromString($column) - 1));
 			}
-			
+
 			//if ($sheetIndex == $phpExcel->getActiveSheetIndex()) {
 				// $worksheet->select();
 			//}
-			
+
 			if ($phpSheet->getProtection()->getSheet()) {
 				$worksheet->protect($phpSheet->getProtection()->getPassword(), true);
 			}
-			
+
 			if (!$phpSheet->getShowGridlines()) {
 				$worksheet->hideGridLines();
 			}
-			
+
 			$formats = array();
 			foreach ($phpSheet->getCellCollection() as $cell) {
 				$row = $cell->getRow() - 1;
 				$column = PHPExcel_Cell::columnIndexFromString($cell->getColumn()) - 1;
-				
+
 				// Don't break Excel!
 				if ($row + 1 >= 65569) {
 					break;
 				}
 
-				$style = $emptyStyle;			
+				$style = $emptyStyle;
 				if (isset($aStyles[$cell->getCoordinate()])) {
 					$style = $aStyles[$cell->getCoordinate()];
 				}
 				$styleHash = $style->getHashCode();
-				
+
 				if (!isset($formats[$styleHash])) {
 					$formats[$styleHash] = $workbook->addFormat(array(
 						'HAlign' => $style->getAlignment()->getHorizontal(),
 						'VAlign' => $this->_mapVAlign($style->getAlignment()->getVertical()),
 						'TextRotation' => $style->getAlignment()->getTextRotation(),
-						
+
 						'Bold' => $style->getFont()->getBold(),
 						'FontFamily' => $style->getFont()->getName(),
 						'Color' => $this->_addColor($workbook, $style->getFont()->getColor()->getRGB()),
 						'Underline' => $this->_mapUnderline($style->getFont()->getUnderline()),
 						'Size' => $style->getFont()->getSize(),
 						//~ 'Script' => $style->getSuperscript(),
-						
-						'NumFormat' => iconv("UTF-8", "Windows-1252", $style->getNumberFormat()->getFormatCode()),						 
+
+						'NumFormat' => iconv("UTF-8", "Windows-1252", $style->getNumberFormat()->getFormatCode()),
 
 						'Bottom' => $this->_mapBorderStyle($style->getBorders()->getBottom()->getBorderStyle()),
 						'Top' => $this->_mapBorderStyle($style->getBorders()->getTop()->getBorderStyle()),
@@ -170,11 +171,11 @@ class PHPExcel_Writer_Excel5 implements PHPExcel_Writer_IWriter {
 						'TopColor' => $this->_addColor($workbook, $style->getBorders()->getTop()->getColor()->getRGB()),
 						'RightColor' => $this->_addColor($workbook, $style->getBorders()->getRight()->getColor()->getRGB()),
 						'LeftColor' => $this->_addColor($workbook, $style->getBorders()->getLeft()->getColor()->getRGB()),
-						
+
 						'FgColor' => $this->_addColor($workbook, $style->getFill()->getStartColor()->getRGB()),
 						'BgColor' => $this->_addColor($workbook, $style->getFill()->getEndColor()->getRGB()),
 						'Pattern' => $this->_mapFillType($style->getFill()->getFillType()),
-						
+
 					));
 					if ($style->getAlignment()->getWrapText()) {
 						$formats[$styleHash]->setTextWrap();
@@ -195,7 +196,7 @@ class PHPExcel_Writer_Excel5 implements PHPExcel_Writer_IWriter {
 					if ($cell->hasHyperlink()) {
 						$worksheet->writeUrl($row, $column, str_replace('sheet://', 'internal:', $cell->getHyperlink()->getUrl()), $cell->getValue(), $formats[$styleHash]);
 					} else {
-						$worksheet->write($row, $column, $cell->getValue(), $formats[$styleHash]);
+						$worksheet->write($row, $column, $cell->getValue(), $formats[$styleHash],$style->getNumberFormat()->getFormatCode());
 					}
 				}
 			}
@@ -205,18 +206,18 @@ class PHPExcel_Writer_Excel5 implements PHPExcel_Writer_IWriter {
 				$column = PHPExcel_Cell::columnIndexFromString($columnDimension->getColumnIndex()) - 1;
 				$worksheet->setColumn( $column, $column, $columnDimension->getWidth(), null, ($columnDimension->getVisible() ? '0' : '1') );
 			}
-			
+
 			foreach ($phpSheet->getRowDimensions() as $rowDimension) {
 				$worksheet->setRow( $rowDimension->getRowIndex() - 1, $rowDimension->getRowHeight(), null, ($rowDimension->getVisible() ? '0' : '1') );
 			}
-			
+
 			foreach ($phpSheet->getMergeCells() as $cells) {
 				list($first, $last) = PHPExcel_Cell::splitRange($cells);
 				list($firstColumn, $firstRow) = PHPExcel_Cell::coordinateFromString($first);
 				list($lastColumn, $lastRow) = PHPExcel_Cell::coordinateFromString($last);
 				$worksheet->mergeCells($firstRow - 1, PHPExcel_Cell::columnIndexFromString($firstColumn) - 1, $lastRow - 1, PHPExcel_Cell::columnIndexFromString($lastColumn) - 1);
 			}
-			
+
 			foreach ($phpSheet->getDrawingCollection() as $drawing) {
 				if ($drawing instanceof PHPExcel_Worksheet_BaseDrawing) {
 					$filename = $drawing->getPath();
@@ -231,7 +232,7 @@ class PHPExcel_Writer_Excel5 implements PHPExcel_Writer_IWriter {
 					$worksheet->insertBitmap($row - 1, PHPExcel_Cell::columnIndexFromString($column) - 1, $image, $drawing->getOffsetX(), $drawing->getOffsetY(), $drawing->getWidth() / $imagesize[0], $drawing->getHeight() / $imagesize[1]);
 				}
 			}
-			
+
 			// page setup
 			if ($phpSheet->getPageSetup()->getOrientation() == PHPExcel_Worksheet_PageSetup::ORIENTATION_LANDSCAPE) {
 				$worksheet->setLandscape();
@@ -243,88 +244,88 @@ class PHPExcel_Writer_Excel5 implements PHPExcel_Writer_IWriter {
 			$worksheet->setMarginRight($phpSheet->getPageMargins()->getRight());
 			$worksheet->setMarginTop($phpSheet->getPageMargins()->getTop());
 			$worksheet->setMarginBottom($phpSheet->getPageMargins()->getBottom());
-			
+
 			// -------------------------------------------------------------------
 			// Commented due to bug:
 			// http://pear.php.net/bugs/bug.php?id=2146
 			// -------------------------------------------------------------------
 			// if ($phpSheet->getPageSetup()->isPrintAreaSet()) {
-			// 	// Print area
-			// 	$printArea = PHPExcel_Cell::splitRange($phpSheet->getPageSetup()->getPrintArea());
-			// 	$printArea[0] = PHPExcel_Cell::coordinateFromString($printArea[0]);
-			// 	$printArea[1] = PHPExcel_Cell::coordinateFromString($printArea[1]);
-			// 
-			// 	$worksheet->printArea(
-			// 		$printArea[0][1],
-			// 		PHPExcel_Cell::columnIndexFromString($printArea[0][0]) - 1,
-			// 		$printArea[1][1],
-			// 		PHPExcel_Cell::columnIndexFromString($printArea[1][0]) - 1
-			// 	);
+			//	// Print area
+			//	$printArea = PHPExcel_Cell::splitRange($phpSheet->getPageSetup()->getPrintArea());
+			//	$printArea[0] = PHPExcel_Cell::coordinateFromString($printArea[0]);
+			//	$printArea[1] = PHPExcel_Cell::coordinateFromString($printArea[1]);
+			//
+			//	$worksheet->printArea(
+			//		$printArea[0][1],
+			//		PHPExcel_Cell::columnIndexFromString($printArea[0][0]) - 1,
+			//		$printArea[1][1],
+			//		PHPExcel_Cell::columnIndexFromString($printArea[1][0]) - 1
+			//	);
 			// }
-		
- 			// Support for print scale
- 			if ($phpSheet->getPageSetup()->getScale()) {
- 			    $worksheet->setPrintScale($phpSheet->getPageSetup()->getScale());
- 			}
- 
- 			// Support for fitting to pages
- 			if ($phpSheet->getPageSetup()->getFitToWidth()) {
- 			    if ($phpSheet->getPageSetup()->getFitToHeight()) {
- 			        // Both properties are set, so use them
- 			        // Note: This case is double, see below
- 			        $worksheet->fitToPages($phpSheet->getPageSetup()->getFitToWidth(), $phpSheet->getPageSetup()->getFitToHeight());
- 			    } else {
- 			        // Only width given, make assumption about height
- 			        $height = 0;
- 			        $worksheet->fitToPages($phpSheet->getPageSetup()->getFitToWidth(), $height);
- 			    }
- 			} else if ($phpSheet->getPageSetup()->getFitToHeight()) {
- 			    if ($phpSheet->getPageSetup()->getFitToWidth()) {
- 			        // Both properties are set, so use them
- 			        // Note: This case is double, see below
- 			        $worksheet->fitToPages($phpSheet->getPageSetup()->getFitToWidth(), $phpSheet->getPageSetup()->getFitToHeight());
- 			    } else {
- 			        // Only height given, make assumption about width
- 			        $width = 0;
- 			        $worksheet->fitToPages($width, $phpSheet->getPageSetup()->getFitToHeight());
- 			    }
- 			}
- 
- 			// Support for breaks
- 			$vBreaks = array();
- 			$hBreaks = array();
- 			foreach ($phpSheet->getBreaks() as $cell => $breakType) {
- 			    // Fetch coordinates
- 			    $coordinates = PHPExcel_Cell::coordinateFromString($cell);
- 
- 			    // Decide what to do by the type of break
- 			    switch ($breakType) {
- 			        case PHPExcel_Worksheet::BREAK_COLUMN:
- 			            // Add to list of vertical breaks
- 			            $vBreaks[] = $coordinates[0];
- 			            break;
- 
- 		            case PHPExcel_Worksheet::BREAK_ROW:
- 		                // Add to list of horizontal breaks
- 		                $hBreaks[] = $coordinates[1];
- 		                break;
- 
- 	                case PHPExcel_Worksheet::BREAK_NONE:
- 	                default:
- 	                    // Nothing to do
- 	                    break;
- 			    }
- 			}
- 			$worksheet->setVPagebreaks($vBreaks);
- 			$worksheet->setHPagebreaks($hBreaks);			
+
+			// Support for print scale
+			if ($phpSheet->getPageSetup()->getScale()) {
+				$worksheet->setPrintScale($phpSheet->getPageSetup()->getScale());
+			}
+
+			// Support for fitting to pages
+			if ($phpSheet->getPageSetup()->getFitToWidth()) {
+				if ($phpSheet->getPageSetup()->getFitToHeight()) {
+					// Both properties are set, so use them
+					// Note: This case is double, see below
+					$worksheet->fitToPages($phpSheet->getPageSetup()->getFitToWidth(), $phpSheet->getPageSetup()->getFitToHeight());
+				} else {
+					// Only width given, make assumption about height
+					$height = 0;
+					$worksheet->fitToPages($phpSheet->getPageSetup()->getFitToWidth(), $height);
+				}
+			} else if ($phpSheet->getPageSetup()->getFitToHeight()) {
+				if ($phpSheet->getPageSetup()->getFitToWidth()) {
+					// Both properties are set, so use them
+					// Note: This case is double, see below
+					$worksheet->fitToPages($phpSheet->getPageSetup()->getFitToWidth(), $phpSheet->getPageSetup()->getFitToHeight());
+				} else {
+					// Only height given, make assumption about width
+					$width = 0;
+					$worksheet->fitToPages($width, $phpSheet->getPageSetup()->getFitToHeight());
+				}
+			}
+
+			// Support for breaks
+			$vBreaks = array();
+			$hBreaks = array();
+			foreach ($phpSheet->getBreaks() as $cell => $breakType) {
+				// Fetch coordinates
+				$coordinates = PHPExcel_Cell::coordinateFromString($cell);
+
+				// Decide what to do by the type of break
+				switch ($breakType) {
+					case PHPExcel_Worksheet::BREAK_COLUMN:
+						// Add to list of vertical breaks
+						$vBreaks[] = $coordinates[0];
+						break;
+
+					case PHPExcel_Worksheet::BREAK_ROW:
+						// Add to list of horizontal breaks
+						$hBreaks[] = $coordinates[1];
+						break;
+
+					case PHPExcel_Worksheet::BREAK_NONE:
+					default:
+						// Nothing to do
+						break;
+				}
+			}
+			$worksheet->setVPagebreaks($vBreaks);
+			$worksheet->setHPagebreaks($hBreaks);
 		}
-		
+
 		$workbook->close();
 	}
-	
+
 	/**
 	 * Add color
-	 */	
+	 */
 	private function _addColor($workbook, $rgb) {
 		if (!isset($this->_colors[$rgb])) {
 			$workbook->setCustomColor(8 + count($this->_colors), hexdec(substr($rgb, 0, 2)), hexdec(substr($rgb, 2, 2)), hexdec(substr($rgb, 4)));
@@ -332,10 +333,10 @@ class PHPExcel_Writer_Excel5 implements PHPExcel_Writer_IWriter {
 		}
 		return $this->_colors[$rgb];
 	}
-	
+
 	/**
 	 * Map border style
-	 */	
+	 */
 	private function _mapBorderStyle($borderStyle) {
 		switch ($borderStyle) {
 			case PHPExcel_Style_Border::BORDER_NONE: return 0;
@@ -343,10 +344,10 @@ class PHPExcel_Writer_Excel5 implements PHPExcel_Writer_IWriter {
 			default: return 1; // map others to thin
 		}
 	}
-	
+
 	/**
 	 * Map underline
-	 */	
+	 */
 	private function _mapUnderline($underline) {
 		switch ($underline) {
 			case PHPExcel_Style_Font::UNDERLINE_NONE:
@@ -358,10 +359,10 @@ class PHPExcel_Writer_Excel5 implements PHPExcel_Writer_IWriter {
 				return 1; // map others to single
 		}
 	}
-	
+
 	/**
 	 * Map fill type
-	 */	
+	 */
 	private function _mapFillType($fillType) {
 		switch ($fillType) { // just a guess
 			case PHPExcel_Style_Fill::FILL_NONE: return 0;
@@ -386,38 +387,38 @@ class PHPExcel_Writer_Excel5 implements PHPExcel_Writer_IWriter {
 			case PHPExcel_Style_Fill::FILL_PATTERN_LIGHTVERTICAL: return 19;
 			case PHPExcel_Style_Fill::FILL_PATTERN_MEDIUMGRAY: return 20;
 		}
-		
+
 		return 0;
 	}
-	
+
 	/**
 	 * Map VAlign
-	 */	
+	 */
 	private function _mapVAlign($vAlign) {
 		return ($vAlign == 'center' || $vAlign == 'justify' ? 'v' : '') . $vAlign;
 	}
-	
+
 	/**
 	 * Get an array of all styles
 	 *
-	 * @param 	PHPExcel				$pPHPExcel
-	 * @return 	PHPExcel_Style[]		All styles in PHPExcel
-	 * @throws 	Exception
+	 * @param	PHPExcel				$pPHPExcel
+	 * @return	PHPExcel_Style[]		All styles in PHPExcel
+	 * @throws	Exception
 	 */
 	private function _allStyles(PHPExcel $pPHPExcel = null)
-	{	
+	{
 		// Get an array of all styles
 		$aStyles		= array();
-				
+
 		for ($i = 0; $i < $pPHPExcel->getSheetCount(); $i++) {
 			foreach ($pPHPExcel->getSheet($i)->getStyles() as $style) {
 				$aStyles[] = $style;
 			}
 		}
-				
+
 		return $aStyles;
 	}
-	
+
 	/**
 	 * Get temporary storage directory
 	 *
@@ -426,12 +427,12 @@ class PHPExcel_Writer_Excel5 implements PHPExcel_Writer_IWriter {
 	public function getTempDir() {
 		return $this->_tempDir;
 	}
-	
+
 	/**
 	 * Set temporary storage directory
 	 *
-	 * @param 	string	$pValue		Temporary storage directory
-	 * @throws 	Exception	Exception when directory does not exist
+	 * @param	string	$pValue		Temporary storage directory
+	 * @throws	Exception	Exception when directory does not exist
 	 */
 	public function setTempDir($pValue = '') {
 		if (is_dir($pValue)) {

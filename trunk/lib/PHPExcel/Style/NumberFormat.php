@@ -22,7 +22,7 @@
  * @package    PHPExcel_Style
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -44,6 +44,8 @@ class PHPExcel_Style_NumberFormat implements PHPExcel_IComparable
 	
 	const FORMAT_NUMBER						= '0';
 	const FORMAT_NUMBER_00					= '0.00';
+	const FORMAT_NUMBER_COMMA_SEPARATED1	= '#,##0.00';
+	const FORMAT_NUMBER_COMMA_SEPARATED2	= '#,##0.00_-';
 	
 	const FORMAT_PERCENTAGE					= '0%';
 	const FORMAT_PERCENTAGE_00				= '0.00%';
@@ -66,6 +68,7 @@ class PHPExcel_Style_NumberFormat implements PHPExcel_IComparable
 	const FORMAT_DATE_YYYYMMDDSLASH			= 'yyyy/mm/dd;@';
 	
 	const FORMAT_CURRENCY_USD_SIMPLE		= '"$"#,##0.00_-';
+	const FORMAT_CURRENCY_USD				= '$#,##0_-';
 	const FORMAT_CURRENCY_EUR_SIMPLE		= '[$EUR ]#,##0.00_-';
 	
 	/**
@@ -75,7 +78,22 @@ class PHPExcel_Style_NumberFormat implements PHPExcel_IComparable
 	 */
 	private $_formatCode;
 
-    /**
+	/**
+	 * Parent Style
+	 *
+	 * @var PHPExcel_Style
+	 */
+	 
+	private $_parent;
+	
+	/**
+	 * Parent Borders
+	 *
+	 * @var _parentPropertyName string
+	 */
+	private $_parentPropertyName;
+		
+	/**
      * Create a new PHPExcel_Style_NumberFormat
      */
     public function __construct()
@@ -83,6 +101,59 @@ class PHPExcel_Style_NumberFormat implements PHPExcel_IComparable
     	// Initialise values
     	$this->_formatCode			= PHPExcel_Style_NumberFormat::FORMAT_GENERAL;
     }
+
+	/**
+	 * Property Prepare bind
+	 *
+	 * Configures this object for late binding as a property of a parent object
+	 *	 
+	 * @param $parent
+	 * @param $parentPropertyName
+	 */
+	public function propertyPrepareBind($parent, $parentPropertyName)
+	{
+		// Initialize parent PHPExcel_Style for late binding. This relationship purposely ends immediately when this object
+		// is bound to the PHPExcel_Style object pointed to so as to prevent circular references.
+		$this->_parent 				= $parent;
+		$this->_parentPropertyName	= $parentPropertyName;
+	}
+    
+    /**
+     * Property Get Bound
+     *
+     * Returns the PHPExcel_Style_NumberFormat that is actual bound to PHPExcel_Style
+	 *
+	 * @return PHPExcel_Style_NumberFormat
+     */
+	private function propertyGetBound() {
+		if(!isset($this->_parent))
+			return $this;																// I am bound
+
+		if($this->_parent->propertyIsBound($this->_parentPropertyName))
+			return $this->_parent->getNumberFormat();									// Another one is bound
+
+		return $this;																	// No one is bound yet
+	}
+	
+    /**
+     * Property Begin Bind
+     *
+     * If no PHPExcel_Style_NumberFormat has been bound to PHPExcel_Style then bind this one. Return the actual bound one.
+	 *
+	 * @return PHPExcel_Style_NumberFormat
+     */
+	private function propertyBeginBind() {
+		if(!isset($this->_parent))
+			return $this;																// I am already bound
+
+		if($this->_parent->propertyIsBound($this->_parentPropertyName))
+			return $this->_parent->getNumberFormat();									// Another one is already bound
+			
+		$this->_parent->propertyCompleteBind($this, $this->_parentPropertyName);		// Bind myself
+		$this->_parent = null;
+		
+		return $this;
+	}
     
     /**
      * Apply styles from array
@@ -114,7 +185,7 @@ class PHPExcel_Style_NumberFormat implements PHPExcel_IComparable
      * @return string
      */
     public function getFormatCode() {
-    	return $this->_formatCode;
+    	return $this->propertyGetBound()->_formatCode;
     }
     
     /**
@@ -126,7 +197,7 @@ class PHPExcel_Style_NumberFormat implements PHPExcel_IComparable
         if ($pValue == '') {
     		$pValue = PHPExcel_Style_NumberFormat::FORMAT_GENERAL;
     	}
-    	$this->_formatCode = $pValue;
+    	$this->propertyBeginBind()->_formatCode = $pValue;
     }
 
 	/**
@@ -135,8 +206,9 @@ class PHPExcel_Style_NumberFormat implements PHPExcel_IComparable
 	 * @return string	Hash code
 	 */	
 	public function getHashCode() {
+		$property = $this->propertyGetBound();
     	return md5(
-    		  $this->_formatCode
+    		  $property->_formatCode
     		. __CLASS__
     	);
     }
@@ -170,10 +242,14 @@ class PHPExcel_Style_NumberFormat implements PHPExcel_IComparable
 				case self::FORMAT_NUMBER_00:
 					return sprintf('%1.2f', $value);
 					
+				case self::FORMAT_NUMBER_COMMA_SEPARATED1:
+				case self::FORMAT_NUMBER_COMMA_SEPARATED2:
+					return number_fromat($value, 2, ',', '.');
+					
 				case self::FORMAT_PERCENTAGE:
-					return round( (100 * $value), 0) ; '%';
+					return round( (100 * $value), 0) . '%';
 				case self::FORMAT_PERCENTAGE_00:
-					return round( (100 * $value), 2) ; '%';
+					return round( (100 * $value), 2) . '%';
 					
 				case self::FORMAT_DATE_YYYYMMDD:
 					return date('Y-m-d', (1 * $value));
@@ -183,9 +259,11 @@ class PHPExcel_Style_NumberFormat implements PHPExcel_IComparable
 					return date('Y/m/d', (1 * $value));
 					
 				case self::FORMAT_CURRENCY_USD_SIMPLE:
-					return '$' . sprintf('%1.2f', $value);
-				case self::FORMAT_CURRENCY_EUR_SIMPLE:
-					return 'EUR ' . sprintf('%1.2f', $value);
+					return '$' . number_format($value, 2);
+				case self::FORMAT_CURRENCY_USD:
+					return '$' . number_format($value);
+ 				case self::FORMAT_CURRENCY_EUR_SIMPLE:
+ 					return 'EUR ' . sprintf('%1.2f', $value);
 			}
 		}
 		

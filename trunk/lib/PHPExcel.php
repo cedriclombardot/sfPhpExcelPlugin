@@ -22,7 +22,7 @@
  * @package    PHPExcel
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -216,6 +216,16 @@ class PHPExcel
 	}
 	
 	/**
+	 * Get all sheets
+	 *
+	 * @return PHPExcel_Worksheet[]
+	 */
+	public function getAllSheets()
+	{
+		return $this->_workSheetCollection;
+	}
+	
+	/**
 	 * Get sheet by name
 	 *
 	 * @param string $pName Sheet name
@@ -297,6 +307,21 @@ class PHPExcel
 		}
 		
 		return $returnValue;
+	}
+	
+	/**
+	 * Add external sheet
+	 *
+	 * @param PHPExcel_Worksheet $pSheet External sheet to add
+	 * @throws Exception
+	 */
+	public function addExternalSheet(PHPExcel_Worksheet $pSheet) {
+		if (!is_null($this->getSheetByName($pSheet->getTitle()))) {
+			throw new Exception("Workbook already contains a worksheet named '{$pSheet->getTitle()}'. Rename the external sheet first.");
+		}
+		
+		$pSheet->rebindParent($this);
+		$this->addSheet($pSheet);
 	}
 	
 	/**

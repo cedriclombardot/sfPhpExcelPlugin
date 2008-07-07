@@ -22,7 +22,7 @@
  * @package    PHPExcel_Writer
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -81,6 +81,11 @@ class PHPExcel_Writer_Serialized implements PHPExcel_Writer_IWriter
 	public function save($pFilename = null)
 	{
 		if (!is_null($this->_spreadSheet)) {
+			// Garbage collect...
+			foreach ($this->_spreadSheet->getAllSheets() as $sheet) {
+        		$sheet->garbageCollect();
+			}
+			
 			// Create new ZIP file and open it for writing
 			$objZip = new ZipArchive();
 			
@@ -170,10 +175,10 @@ class PHPExcel_Writer_Serialized implements PHPExcel_Writer_IWriter
 	
 		// PHPExcel
 		$objWriter->startElement('PHPExcel');
-		$objWriter->writeAttribute('version', '1.6.1');
+		$objWriter->writeAttribute('version', '1.6.2');
 
 			// Comment
-			$objWriter->writeComment('This file has been generated using PHPExcel v1.6.1 (http://www.codeplex.com/PHPExcel). It contains a base64 encoded serialized version of the PHPExcel internal object.');
+			$objWriter->writeComment('This file has been generated using PHPExcel v1.6.2 (http://www.codeplex.com/PHPExcel). It contains a base64 encoded serialized version of the PHPExcel internal object.');
 							
 			// Data
 			$objWriter->startElement('data');

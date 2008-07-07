@@ -30,93 +30,93 @@ require_once 'PHPExcel/Shared/OLE/OLE_PPS.php';
 * @package  OLE
 */
 class PHPExcel_Shared_OLE_PPS_File extends PHPExcel_Shared_OLE_PPS
-{
-    /**
-    * The temporary dir for storing the OLE file
-    * @var string
-    */
-    var $_tmp_dir;
+	{
+	/**
+	* The temporary dir for storing the OLE file
+	* @var string
+	*/
+	public $_tmp_dir;
 
-    /**
-    * The constructor
-    *
-    * @access public
-    * @param string $name The name of the file (in Unicode)
-    * @see OLE::Asc2Ucs()
-    */
-    function __construct($name)
-    {
-        $this->_tmp_dir = '';
-        parent::__construct(
-            null, 
-            $name,
-            PHPExcel_Shared_OLE::OLE_PPS_TYPE_FILE,
-            null,
-            null,
-            null,
-            null,
-            null,
-            '',
-            array());
-    }
+	/**
+	* The constructor
+	*
+	* @access public
+	* @param string $name The name of the file (in Unicode)
+	* @see OLE::Asc2Ucs()
+	*/
+	public function __construct($name)
+	{
+		$this->_tmp_dir = '';
+		parent::__construct(
+			null, 
+			$name,
+			PHPExcel_Shared_OLE::OLE_PPS_TYPE_FILE,
+			null,
+			null,
+			null,
+			null,
+			null,
+			'',
+			array());
+	}
 
-    /**
-    * Sets the temp dir used for storing the OLE file
-    *
-    * @access public
-    * @param string $dir The dir to be used as temp dir
-    * @return true if given dir is valid, false otherwise
-    */
-    function setTempDir($dir)
-    {
-        if (is_dir($dir)) {
-            $this->_tmp_dir = $dir;
-            return true;
-        }
-        return false;
-    }
+	/**
+	* Sets the temp dir used for storing the OLE file
+	*
+	* @access public
+	* @param string $dir The dir to be used as temp dir
+	* @return true if given dir is valid, false otherwise
+	*/
+	public function setTempDir($dir)
+	{
+		if (is_dir($dir)) {
+			$this->_tmp_dir = $dir;
+			return true;
+		}
+		return false;
+	}
 
-    /**
-    * Initialization method. Has to be called right after OLE_PPS_File().
-    *
-    * @access public
-    * @return mixed true on success
-    */
-    function init()
-    {
-        $this->_tmp_filename = tempnam($this->_tmp_dir, "OLE_PPS_File");
-        $fh = @fopen($this->_tmp_filename, "w+b");
-        if ($fh === false) {
-            throw new Exception("Can't create temporary file");
-        }
-        $this->_PPS_FILE = $fh;
-        if ($this->_PPS_FILE) {
-            fseek($this->_PPS_FILE, 0);
-        }
-        return true;
-    }
-    
-    /**
-    * Append data to PPS
-    *
-    * @access public
-    * @param string $data The data to append
-    */
-    function append($data)
-    {
-        if ($this->_PPS_FILE) {
-            fwrite($this->_PPS_FILE, $data);
-        } else {
-            $this->_data .= $data;
-        }
-    }
+	/**
+	* Initialization method. Has to be called right after OLE_PPS_File().
+	*
+	* @access public
+	* @return mixed true on success
+	*/
+	public function init()
+	{
+		$this->_tmp_filename = tempnam($this->_tmp_dir, "OLE_PPS_File");
+		$fh = fopen($this->_tmp_filename, "w+b");
+		if ($fh === false) {
+			throw new Exception("Can't create temporary file");
+		}
+		$this->_PPS_FILE = $fh;
+		if ($this->_PPS_FILE) {
+			fseek($this->_PPS_FILE, 0);
+		}
+		return true;
+	}
 
-    /**
-     * Returns a stream for reading this file using fread() etc.
-     * @return  resource  a read-only stream
-     */
-    function getStream()
-    {
-        $this->ole->getStream($this);
-    }
+	/**
+	* Append data to PPS
+	*
+	* @access public
+	* @param string $data The data to append
+	*/
+	public function append($data)
+	{
+		if ($this->_PPS_FILE) {
+			fwrite($this->_PPS_FILE, $data);
+		} else {
+			$this->_data .= $data;
+		}
+	}
+
+	/**
+	 * Returns a stream for reading this file using fread() etc.
+	 * @return  resource  a read-only stream
+	 */
+	public function getStream()
+	{
+		$this->ole->getStream($this);
+	}
 }

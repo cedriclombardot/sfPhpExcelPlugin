@@ -58,6 +58,21 @@ class PHPExcel_Style_Protection implements PHPExcel_IComparable
 	 */
 	private $_hidden;
 
+	/**
+	 * Parent Style
+	 *
+	 * @var PHPExcel_Style
+	 */
+	 
+	private $_parent;
+	
+	/**
+	 * Parent Borders
+	 *
+	 * @var _parentPropertyName string
+	 */
+	private $_parentPropertyName;
+		
     /**
      * Create a new PHPExcel_Style_Protection
      */
@@ -68,6 +83,59 @@ class PHPExcel_Style_Protection implements PHPExcel_IComparable
     	$this->_hidden			= self::PROTECTION_INHERIT;
     }
 
+	/**
+	 * Property Prepare bind
+	 *
+	 * Configures this object for late binding as a property of a parent object
+	 *	 
+	 * @param $parent
+	 * @param $parentPropertyName
+	 */
+	public function propertyPrepareBind($parent, $parentPropertyName)
+	{
+		// Initialize parent PHPExcel_Style for late binding. This relationship purposely ends immediately when this object
+		// is bound to the PHPExcel_Style object pointed to so as to prevent circular references.
+		$this->_parent		 		= $parent;
+		$this->_parentPropertyName	= $parentPropertyName;
+	}
+
+    /**
+     * Property Get Bound
+     *
+     * Returns the PHPExcel_Style_Protection that is actual bound to PHPExcel_Style
+	 *
+	 * @return PHPExcel_Style_Protection
+     */
+	private function propertyGetBound() {
+		if(!isset($this->_parent))
+			return $this;																// I am bound
+
+		if($this->_parent->propertyIsBound($this->_parentPropertyName))
+			return $this->_parent->getProtection();										// Another one is bound
+
+		return $this;																	// No one is bound yet
+	}
+	
+    /**
+     * Property Begin Bind
+     *
+     * If no PHPExcel_Style_Protection has been bound to PHPExcel_Style then bind this one. Return the actual bound one.
+	 *
+	 * @return PHPExcel_Style_Protection
+     */
+	private function propertyBeginBind() {
+		if(!isset($this->_parent))
+			return $this;																// I am already bound
+
+		if($this->_parent->propertyIsBound($this->_parentPropertyName))
+			return $this->_parent->getProtection();										// Another one is already bound
+			
+		$this->_parent->propertyCompleteBind($this, $this->_parentPropertyName);		// Bind myself
+		$this->_parent = null;
+		
+		return $this;
+	}
+    
     /**
      * Apply styles from array
      *
@@ -97,7 +165,7 @@ class PHPExcel_Style_Protection implements PHPExcel_IComparable
      * @return string
      */
     public function getLocked() {
-    	return $this->_locked;
+    	return $this->propertyGetBound()->_locked;
     }
 
     /**
@@ -106,7 +174,7 @@ class PHPExcel_Style_Protection implements PHPExcel_IComparable
      * @param string $pValue
      */
     public function setLocked($pValue = self::PROTECTION_INHERIT) {
-    	$this->_locked = $pValue;
+    	$this->propertyBeginBind()->_locked = $pValue;
     }
     
     /**
@@ -115,7 +183,7 @@ class PHPExcel_Style_Protection implements PHPExcel_IComparable
      * @return string
      */
     public function getHidden() {
-    	return $this->_hidden;
+    	return $this->propertyGetBound()->_hidden;
     }
 
     /**
@@ -124,7 +192,7 @@ class PHPExcel_Style_Protection implements PHPExcel_IComparable
      * @param string $pValue
      */
     public function setHidden($pValue = self::PROTECTION_INHERIT) {
-    	$this->_hidden = $pValue;
+    	$this->propertyBeginBind()->_hidden = $pValue;
     }
 
 	/**
@@ -133,9 +201,10 @@ class PHPExcel_Style_Protection implements PHPExcel_IComparable
 	 * @return string	Hash code
 	 */
 	public function getHashCode() {
+		$property = $this->propertyGetBound();
     	return md5(
-    		  $this->_locked
-    		. $this->_hidden
+    		  $property->_locked
+    		. $property->_hidden
     		. __CLASS__
     	);
     }

@@ -22,7 +22,7 @@
  * @package    PHPExcel_Shared
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -49,7 +49,7 @@ class PHPExcel_Shared_String
 	 * @param 	string	$value	Value to unescape
 	 * @return 	string
 	 */
-	function ControlCharacterOOXML2PHP($value = '') {
+	public static function ControlCharacterOOXML2PHP($value = '') {
 		for ($i = 0; $i <= 19; $i++) {
 			if ($i != 9 && $i != 10 && $i != 13) {
 				$value = str_replace('_x' . sprintf('%04s' , strtoupper(dechex($i))) . '_', chr($i), $value);
@@ -73,7 +73,7 @@ class PHPExcel_Shared_String
 	 * @param 	string	$value	Value to escape
 	 * @return 	string
 	 */
-	function ControlCharacterPHP2OOXML($value = '') {
+	public static function ControlCharacterPHP2OOXML($value = '') {
 		for ($i = 0; $i <= 19; $i++) {
 			if ($i != 9 && $i != 10 && $i != 13) {
 				$value = str_replace(chr($i), '_x' . sprintf('%04s' , strtoupper(dechex($i))) . '_', $value);
@@ -81,5 +81,15 @@ class PHPExcel_Shared_String
 		}
 
 		return $value;
+	}
+	
+	/**
+	 * Check if a string contains UTF8 data
+	 *
+	 * @param string $value
+	 * @return boolean
+	 */
+	public static function IsUTF8($value = '') {
+		return utf8_encode(utf8_decode($value)) === $value;
 	}
 }

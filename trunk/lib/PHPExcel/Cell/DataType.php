@@ -22,7 +22,7 @@
  * @package    PHPExcel_Cell
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -59,7 +59,7 @@ class PHPExcel_Cell_DataType
 			return PHPExcel_Cell_DataType::TYPE_FORMULA;
 		} elseif (is_bool($pValue)) {
 			return PHPExcel_Cell_DataType::TYPE_BOOL;
-		} elseif (is_numeric($pValue)) {
+		} elseif (preg_match('/^[0-9]*\.?[0-9]*$/', $pValue)) {
 			return PHPExcel_Cell_DataType::TYPE_NUMERIC;
 		} else {
 			return PHPExcel_Cell_DataType::TYPE_STRING;

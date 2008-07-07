@@ -22,7 +22,7 @@
  * @package    PHPExcel_Style
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -89,9 +89,24 @@ class PHPExcel_Style_Font implements PHPExcel_IComparable
 	 * 
 	 * @var PHPExcel_Style_Color
 	 */
-	private $_color;
+	private $_color;	
+	
+	/**
+	 * Parent Style
+	 *
+	 * @var PHPExcel_Style
+	 */
+	 
+	private $_parent;
+	
+	/**
+	 * Parent Borders
+	 *
+	 * @var _parentPropertyName string
+	 */
+	private $_parentPropertyName;
 		
-    /**
+	/**
      * Create a new PHPExcel_Style_Font
      */
     public function __construct()
@@ -105,6 +120,59 @@ class PHPExcel_Style_Font implements PHPExcel_IComparable
 		$this->_striketrough		= false;
 		$this->_color				= new PHPExcel_Style_Color(PHPExcel_Style_Color::COLOR_BLACK);
     }
+
+	/**
+	 * Property Prepare bind
+	 *
+	 * Configures this object for late binding as a property of a parent object
+	 *	 
+	 * @param $parent
+	 * @param $parentPropertyName
+	 */
+	public function propertyPrepareBind($parent, $parentPropertyName)
+	{
+		// Initialize parent PHPExcel_Style for late binding. This relationship purposely ends immediately when this object
+		// is bound to the PHPExcel_Style object pointed to so as to prevent circular references.
+		$this->_parent 				= $parent;
+		$this->_parentPropertyName	= $parentPropertyName;
+	}
+
+    /**
+     * Property Get Bound
+     *
+     * Returns the PHPExcel_Style_Font that is actual bound to PHPExcel_Style
+	 *
+	 * @return PHPExcel_Style_Font
+     */
+	private function propertyGetBound() {
+		if(!isset($this->_parent))
+			return $this;																// I am bound
+
+		if($this->_parent->propertyIsBound($this->_parentPropertyName))
+			return $this->_parent->getFont();											// Another one is bound
+
+		return $this;																	// No one is bound yet
+	}
+	
+    /**
+     * Property Begin Bind
+     *
+     * If no PHPExcel_Style_Font has been bound to PHPExcel_Style then bind this one. Return the actual bound one.
+	 *
+	 * @return PHPExcel_Style_Font
+     */
+	private function propertyBeginBind() {
+		if(!isset($this->_parent))
+			return $this;																// I am already bound
+
+		if($this->_parent->propertyIsBound($this->_parentPropertyName))
+			return $this->_parent->getFont();											// Another one is already bound
+			
+		$this->_parent->propertyCompleteBind($this, $this->_parentPropertyName);		// Bind myself
+		$this->_parent = null;
+		
+		return $this;
+	}
     
     /**
      * Apply styles from array
@@ -161,7 +229,7 @@ class PHPExcel_Style_Font implements PHPExcel_IComparable
      * @return string
      */
     public function getName() {
-    	return $this->_name;
+    	return $this->propertyGetBound()->_name;
     }
     
     /**
@@ -173,7 +241,7 @@ class PHPExcel_Style_Font implements PHPExcel_IComparable
    		if ($pValue == '') {
     		$pValue = 'Calibri';
     	}
-    	$this->_name = $pValue;
+    	$this->propertyBeginBind()->_name = $pValue;
     }
     
     /**
@@ -182,7 +250,7 @@ class PHPExcel_Style_Font implements PHPExcel_IComparable
      * @return double
      */
     public function getSize() {
-    	return $this->_size;
+    	return $this->propertyGetBound()->_size;
     }
     
     /**
@@ -194,7 +262,7 @@ class PHPExcel_Style_Font implements PHPExcel_IComparable
     	if ($pValue == '') {
     		$pValue = 10;
     	}
-    	$this->_size = $pValue;
+    	$this->propertyBeginBind()->_size = $pValue;
     }
     
     /**
@@ -203,7 +271,7 @@ class PHPExcel_Style_Font implements PHPExcel_IComparable
      * @return boolean
      */
     public function getBold() {
-    	return $this->_bold;
+    	return $this->propertyGetBound()->_bold;
     }
     
     /**
@@ -215,7 +283,7 @@ class PHPExcel_Style_Font implements PHPExcel_IComparable
     	if ($pValue == '') {
     		$pValue = false;
     	}
-    	$this->_bold = $pValue;
+    	$this->propertyBeginBind()->_bold = $pValue;
     }
     
     /**
@@ -224,7 +292,7 @@ class PHPExcel_Style_Font implements PHPExcel_IComparable
      * @return boolean
      */
     public function getItalic() {
-    	return $this->_italic;
+    	return $this->propertyGetBound()->_italic;
     }
     
     /**
@@ -236,7 +304,7 @@ class PHPExcel_Style_Font implements PHPExcel_IComparable
     	if ($pValue == '') {
     		$pValue = false;
     	}
-    	$this->_italic = $pValue;
+    	$this->propertyBeginBind()->_italic = $pValue;
     }
     
     /**
@@ -245,7 +313,7 @@ class PHPExcel_Style_Font implements PHPExcel_IComparable
      * @return string
      */
     public function getUnderline() {
-    	return $this->_underline;
+    	return $this->propertyGetBound()->_underline;
     }
     
     /**
@@ -257,7 +325,16 @@ class PHPExcel_Style_Font implements PHPExcel_IComparable
     	if ($pValue == '') {
     		$pValue = PHPExcel_Style_Font::UNDERLINE_NONE;
     	}
-    	$this->_underline = $pValue;
+    	$this->propertyBeginBind()->_underline = $pValue;
+    }
+    
+    /**
+     * Get Striketrough
+     *
+     * @return boolean
+     */
+    public function getStriketrough() {
+    	return $this->propertyGetBound()->_striketrough;
     }
     
     /**
@@ -269,25 +346,18 @@ class PHPExcel_Style_Font implements PHPExcel_IComparable
     	if ($pValue == '') {
     		$pValue = false;
     	}
-    	$this->_striketrough = $pValue;
+    	$this->propertyBeginBind()->_striketrough = $pValue;
     }
-    
-    /**
-     * Get Striketrough
-     *
-     * @return boolean
-     */
-    public function getStriketrough() {
-    	return $this->_striketrough;
-    }
-    
+
     /**
      * Get Color
      *
      * @return PHPExcel_Style_Color
      */
     public function getColor() {
-    	return $this->_color;
+    	// It's a get but it may lead to a modified color which we won't detect but in which case we must bind.
+    	// So bind as an assurance.
+    	return $this->propertyBeginBind()->_color;
     }
     
     /**
@@ -297,7 +367,7 @@ class PHPExcel_Style_Font implements PHPExcel_IComparable
      * @throws 	Exception
      */
     public function setColor(PHPExcel_Style_Color $pValue = null) {
-   		$this->_color = $pValue;
+   		$this->propertyBeginBind()->_color = $pValue;
     }
 
 	/**
@@ -306,14 +376,15 @@ class PHPExcel_Style_Font implements PHPExcel_IComparable
 	 * @return string	Hash code
 	 */	
 	public function getHashCode() {
+		$property = $this->propertyGetBound();
     	return md5(
-    		  $this->_name
-    		. $this->_size
-    		. ($this->_bold ? 't' : 'f')
-    		. ($this->_italic ? 't' : 'f')
-    		. $this->_underline
-    		. ($this->_striketrough ? 't' : 'f')
-    		. $this->_color->getHashCode()
+    		  $property->_name
+    		. $property->_size
+    		. ($property->_bold ? 't' : 'f')
+    		. ($property->_italic ? 't' : 'f')
+    		. $property->_underline
+    		. ($property->_striketrough ? 't' : 'f')
+    		. $property->_color->getHashCode()
     		. __CLASS__
     	);
     }

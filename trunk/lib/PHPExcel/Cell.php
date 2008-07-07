@@ -22,7 +22,7 @@
  * @package    PHPExcel
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -122,7 +122,9 @@ class PHPExcel_Cell
     	// Set datatype?
     	if (!is_null($pDataType)) {
     		$this->_dataType = $pDataType;
-    	}
+    	} else {
+			$this->_dataType = PHPExcel_Cell_DataType::dataTypeForValue($pValue);
+		}
  	
     	// Set worksheet
     	$this->_parent = $pSheet;
@@ -204,10 +206,12 @@ class PHPExcel_Cell
      */
     public function getCalculatedValue()
     {
-    	if ($this->_dataType != PHPExcel_Cell_DataType::TYPE_FORMULA) {
-    		return $this->_value;
+		if (is_null($this->_value) || $this->_value == '') {
+			return '';
+    	} else if ($this->_dataType != PHPExcel_Cell_DataType::TYPE_FORMULA) {
+			return $this->_value;
     	} else {
-    		return PHPExcel_Calculation::getInstance()->calculate($this);
+			return PHPExcel_Calculation::getInstance()->calculate($this);
     	}
     }
     
@@ -450,7 +454,7 @@ class PHPExcel_Cell
 	}
     
     /**
-     * Columnindex from string
+     * Column index from string
      *
      * @param 	string $pString
      * @return 	int Column index (base 1 !!!)
@@ -475,6 +479,14 @@ class PHPExcel_Cell
     		$result += 1;
     		
     		return $result;
+    	} else if (strlen($pString) == 3) {
+			$result = 0;
+			$result += ( (1 + (ord(substr($pString, 0, 1)) - 65) ) * 26 * 26);
+			$result += ( (1 + (ord(substr($pString, 1, 1)) - 65) ) * 26);
+			$result += (ord(substr($pString, 2, 2)) - 65);
+			$result += 1;
+			
+    		return $result;
     	} else {
     		throw new Exception("Column string index can not be " . (strlen($pString) != 0 ? "longer than 2 characters" : "empty") . ".");
     	}
@@ -494,7 +506,6 @@ class PHPExcel_Cell
         if ($pColumnIndex < 26) {
         	$returnValue = chr(65 + $pColumnIndex);
         } else {
-        	
         	$iRemainder = (int)($pColumnIndex / 26) -1;
         	$returnValue = PHPExcel_Cell::stringFromColumnIndex( $iRemainder  ).chr(65 + $pColumnIndex%26) ;
         }

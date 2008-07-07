@@ -22,7 +22,7 @@
  * @package    PHPExcel_Writer
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -34,6 +34,9 @@ require_once 'PHPExcel/Cell.php';
 
 /** PHPExcel_RichText */
 require_once 'PHPExcel/RichText.php';
+
+/** PHPExcel_Shared_String */
+require_once 'PHPExcel/Shared/String.php';
 
 
 /**
@@ -260,6 +263,11 @@ class PHPExcel_Writer_CSV implements PHPExcel_Writer_IWriter {
 			$line = '';
 			
 			foreach ($pValues as $element) {
+				// Decode UTF8 data
+				if (PHPExcel_Shared_String::IsUTF8($element)) {
+					$element = utf8_decode($element);
+				}
+				
 				// Escape enclosures
 				$element = str_replace($this->_enclosure, $this->_enclosure . $this->_enclosure, $element);
 

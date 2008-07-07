@@ -22,7 +22,7 @@
  * @package    PHPExcel_Style
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -92,6 +92,21 @@ class PHPExcel_Style_Fill implements PHPExcel_IComparable
 	 * @var PHPExcel_Style_Color
 	 */
 	private $_endColor;
+	
+	/**
+	 * Parent Style
+	 *
+	 * @var PHPExcel_Style
+	 */
+	 
+	private $_parent;
+	
+	/**
+	 * Parent Borders
+	 *
+	 * @var _parentPropertyName string
+	 */
+	private $_parentPropertyName;
 		
     /**
      * Create a new PHPExcel_Style_Fill
@@ -104,7 +119,60 @@ class PHPExcel_Style_Fill implements PHPExcel_IComparable
 		$this->_startColor			= new PHPExcel_Style_Color(PHPExcel_Style_Color::COLOR_WHITE);
 		$this->_endColor			= new PHPExcel_Style_Color(PHPExcel_Style_Color::COLOR_BLACK);
     }
-    
+
+	/**
+	 * Property Prepare bind
+	 *
+	 * Configures this object for late binding as a property of a parent object
+	 *	 
+	 * @param $parent
+	 * @param $parentPropertyName
+	 */
+	public function propertyPrepareBind($parent, $parentPropertyName)
+	{
+		// Initialize parent PHPExcel_Style for late binding. This relationship purposely ends immediately when this object
+		// is bound to the PHPExcel_Style object pointed to so as to prevent circular references.
+		$this->_parent				= $parent;
+		$this->_parentPropertyName	= $parentPropertyName;
+	}
+
+    /**
+     * Property Get Bound
+     *
+     * Returns the PHPExcel_Style_Fill that is actual bound to PHPExcel_Style
+	 *
+	 * @return PHPExcel_Style_Fill
+     */
+	private function propertyGetBound() {
+		if(!isset($this->_parent))
+			return $this;																// I am bound
+
+		if($this->_parent->propertyIsBound($this->_parentPropertyName))
+			return $this->_parent->getFill();											// Another one is bound
+
+		return $this;																	// No one is bound yet
+	}
+	
+    /**
+     * Property Begin Bind
+     *
+     * If no PHPExcel_Style_Fill has been bound to PHPExcel_Style then bind this one. Return the actual bound one.
+	 *
+	 * @return PHPExcel_Style_Fill
+     */
+	private function propertyBeginBind() {
+		if(!isset($this->_parent))
+			return $this;																// I am already bound
+
+		if($this->_parent->propertyIsBound($this->_parentPropertyName))
+			return $this->_parent->getFill();											// Another one is already bound
+			
+		$this->_parent->propertyCompleteBind($this, $this->_parentPropertyName);		// Bind myself
+		$this->_parent = null;
+		
+		return $this;
+	}
+        
     /**
      * Apply styles from array
      * 
@@ -154,10 +222,12 @@ class PHPExcel_Style_Fill implements PHPExcel_IComparable
      * @return string
      */
     public function getFillType() {
-    	if ($this->_fillType == '') {
-    		$this->_fillType = self::FILL_NONE;
+    	$property = $this->propertyGetBound();
+    
+    	if ($property->_fillType == '') {
+    		$property->_fillType = self::FILL_NONE;
     	}
-    	return $this->_fillType;
+    	return $property->_fillType;
     }
     
     /**
@@ -166,7 +236,7 @@ class PHPExcel_Style_Fill implements PHPExcel_IComparable
      * @param string $pValue	PHPExcel_Style_Fill fill type
      */
     public function setFillType($pValue = PHPExcel_Style_Fill::FILL_NONE) {
-    	$this->_fillType = $pValue;
+    	$this->propertyBeginBind()->_fillType = $pValue;
     }
     
     /**
@@ -175,7 +245,7 @@ class PHPExcel_Style_Fill implements PHPExcel_IComparable
      * @return double
      */
     public function getRotation() {
-    	return $this->_rotation;
+    	return $this->propertyGetBound()->_rotation;
     }
     
     /**
@@ -184,7 +254,7 @@ class PHPExcel_Style_Fill implements PHPExcel_IComparable
      * @param double $pValue
      */
     public function setRotation($pValue = 0) {
-    	$this->_rotation = $pValue;
+    	$this->propertyBeginBind()->_rotation = $pValue;
     }
     
     /**
@@ -193,7 +263,9 @@ class PHPExcel_Style_Fill implements PHPExcel_IComparable
      * @return PHPExcel_Style_Color
      */
     public function getStartColor() {
-    	return $this->_startColor;
+    	// It's a get but it may lead to a modified color which we won't detect but in which case we must bind.
+    	// So bind as an assurance.
+    	return $this->propertyBeginBind()->_startColor;
     }
     
     /**
@@ -203,7 +275,7 @@ class PHPExcel_Style_Fill implements PHPExcel_IComparable
      * @throws 	Exception
      */
     public function setStartColor(PHPExcel_Style_Color $pValue = null) {
-   		$this->_startColor = $pValue;
+   		$this->propertyBeginBind()->_startColor = $pValue;
     }
     
     /**
@@ -212,7 +284,9 @@ class PHPExcel_Style_Fill implements PHPExcel_IComparable
      * @return PHPExcel_Style_Color
      */
     public function getEndColor() {
-    	return $this->_endColor;
+    	// It's a get but it may lead to a modified color which we won't detect but in which case we must bind.
+    	// So bind as an assurance.
+    	return $this->propertyBeginBind()->_endColor;
     }
     
     /**
@@ -222,7 +296,7 @@ class PHPExcel_Style_Fill implements PHPExcel_IComparable
      * @throws 	Exception
      */
     public function setEndColor(PHPExcel_Style_Color $pValue = null) {
-   		$this->_endColor = $pValue;
+   		$this->propertyBeginBind()->_endColor = $pValue;
     }
 
 	/**
@@ -231,11 +305,12 @@ class PHPExcel_Style_Fill implements PHPExcel_IComparable
 	 * @return string	Hash code
 	 */	
 	public function getHashCode() {
+		$property = $this->propertyGetBound();
     	return md5(
-    		  $this->_fillType
-    		. $this->_rotation
-    		. $this->_startColor->getHashCode()
-    		. $this->_endColor->getHashCode()
+    		  $property->_fillType
+    		. $property->_rotation
+    		. $property->_startColor->getHashCode()
+    		. $property->_endColor->getHashCode()
     		. __CLASS__
     	);
     }

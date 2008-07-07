@@ -22,7 +22,7 @@
  * @package    PHPExcel
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -75,7 +75,7 @@ class PHPExcel_Style implements PHPExcel_IComparable
 	 * @var PHPExcel_Style_Fill
 	 */
 	private $_fill;
-	
+
 	/**
 	 * Borders
 	 *
@@ -104,26 +104,110 @@ class PHPExcel_Style implements PHPExcel_IComparable
 	 */
 	private $_conditionalStyles;
 	
-	/**Protection
+	/**
+	 * Protection
 	 *
 	 * @var PHPExcel_Style_Protection
 	 */
 	private $_protection;
-		
+	
     /**
      * Create a new PHPExcel_Style
      */
     public function __construct()
     {
     	// Initialise values
-    	$this->_fill				= new PHPExcel_Style_Fill();
-    	$this->_font				= new PHPExcel_Style_Font();
-    	$this->_borders				= new PHPExcel_Style_Borders();
-    	$this->_alignment			= new PHPExcel_Style_Alignment();
-    	$this->_numberFormat		= new PHPExcel_Style_NumberFormat();
+
+		/**
+		 * The following properties are late bound. Binding is initiated by property classes when they are modified.
+		 *
+		 * _font
+		 * _fill
+		 * _borders
+		 * _alignment
+		 * _numberFormat
+		 * _protection
+		 *
+		 */
+
     	$this->_conditionalStyles 	= array();
-    	$this->_protection			= new PHPExcel_Style_Protection();
     }
+ 
+    /**
+     * Property Complete Bind
+     *
+     * Complete the binding process a child property object started
+	 *
+     * @param	$propertyObject
+     * @param	$propertyName			Name of this property in the parent object
+     * @throws Exception	 
+     */ 
+    public function propertyCompleteBind($propertyObject, $propertyName) {
+    	switch($propertyName) {
+    		case "_font":
+				$this->_font = $propertyObject;
+				break;
+    			
+    		case "_fill":
+				$this->_fill = $propertyObject;
+				break;
+    			
+    		case "_borders":
+				$this->_borders = $propertyObject;
+				break;
+    			
+    		case "_alignment":
+				$this->_alignment = $propertyObject;
+				break;
+    			
+			case "_numberFormat":
+				$this->_numberFormat = $propertyObject;
+				break;
+				
+			case "_protection":
+				$this->_protection = $propertyObject;
+				break;
+			
+			default:
+				throw new Exception("Invalid property passed.");
+    	}
+    }
+
+	/**
+	 * Property Is Bound
+	 *
+	 * Determines if a child property is bound to this one
+	 *
+     * @param	$propertyName			Name of this property in the parent object
+	 *
+	 * @return boolean
+	 *
+	 * @throws Exception
+	 */
+	public function propertyIsBound($propertyName) {
+    	switch($propertyName) {
+    		case "_font":
+				return isset($this->_font);
+    			
+    		case "_fill":
+				return isset($this->_fill);
+    			
+    		case "_borders":
+				return isset($this->_borders);
+    			
+    		case "_alignment":
+				return isset($this->_alignment);
+    			
+			case "_numberFormat":
+				return isset($this->_numberFormat);
+				
+			case "_protection":
+				return isset($this->_protection);
+				
+			default:
+				throw new Exception("Invalid property passed.");
+		}
+	}
     
     /**
      * Apply styles from array
@@ -193,7 +277,12 @@ class PHPExcel_Style implements PHPExcel_IComparable
      * @return PHPExcel_Style_Fill
      */
     public function getFill() {
-    	return $this->_fill;
+		if(isset($this->_fill))
+			return $this->_fill;
+
+		$property = new PHPExcel_Style_Fill();
+		$property->propertyPrepareBind($this, "_fill");
+		return $property;
     }
     
     /**
@@ -202,7 +291,12 @@ class PHPExcel_Style implements PHPExcel_IComparable
      * @return PHPExcel_Style_Font
      */
     public function getFont() {
-    	return $this->_font;
+		if(isset($this->_font))
+			return $this->_font;
+
+		$property = new PHPExcel_Style_Font();
+		$property->propertyPrepareBind($this, "_font");
+		return $property;
     }
     
     /**
@@ -211,7 +305,12 @@ class PHPExcel_Style implements PHPExcel_IComparable
      * @return PHPExcel_Style_Borders
      */
     public function getBorders() {
-    	return $this->_borders;
+		if(isset($this->_borders))
+			return $this->_borders;
+
+		$property = new PHPExcel_Style_Borders();
+		$property->propertyPrepareBind($this, "_borders");
+		return $property;
     }
     
     /**
@@ -220,7 +319,12 @@ class PHPExcel_Style implements PHPExcel_IComparable
      * @return PHPExcel_Style_Alignment
      */
     public function getAlignment() {
-    	return $this->_alignment;
+		if(isset($this->_alignment))
+			return $this->_alignment;
+
+		$property = new PHPExcel_Style_Alignment();
+		$property->propertyPrepareBind($this, "_alignment");
+		return $property;
     }
     
     /**
@@ -229,7 +333,12 @@ class PHPExcel_Style implements PHPExcel_IComparable
      * @return PHPExcel_Style_NumberFormat
      */
     public function getNumberFormat() {
-    	return $this->_numberFormat;
+		if(isset($this->_numberFormat))
+			return $this->_numberFormat;
+
+		$property = new PHPExcel_Style_NumberFormat();
+		$property->propertyPrepareBind($this, "_numberFormat");
+		return $property;
     }
     
     /**
@@ -238,7 +347,7 @@ class PHPExcel_Style implements PHPExcel_IComparable
      * @return PHPExcel_Style_Conditional[]
      */
     public function getConditionalStyles() {
-    	return $this->_conditionalStyles;
+		return $this->_conditionalStyles;
     }
        
     /**
@@ -258,9 +367,14 @@ class PHPExcel_Style implements PHPExcel_IComparable
      * @return PHPExcel_Style_Protection
      */
     public function getProtection() {
-    	return $this->_protection;
+		if(isset($this->_protection))
+			return $this->_protection;
+
+		$property = new PHPExcel_Style_Protection();
+		$property->propertyPrepareBind($this, "_protection");
+		return $property;
     }
-    
+   
 	/**
 	 * Get hash code
 	 *
@@ -273,13 +387,13 @@ class PHPExcel_Style implements PHPExcel_IComparable
 		}
 		
     	return md5(
-    		  $this->_fill->getHashCode()
-    		. $this->_font->getHashCode()
-    		. $this->_borders->getHashCode()
-    		. $this->_alignment->getHashCode()
-    		. $this->_numberFormat->getHashCode()
+    		  $this->getFill()->getHashCode()
+    		. $this->getFont()->getHashCode()
+    		. $this->getBorders()->getHashCode()
+    		. $this->getAlignment()->getHashCode()
+    		. $this->getNumberFormat()->getHashCode()
     		. $hashConditionals
-    		. $this->_protection->getHashCode()
+    		. $this->getProtection()->getHashCode()
     		. __CLASS__
     	);
     }

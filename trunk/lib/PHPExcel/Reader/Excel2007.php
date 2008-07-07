@@ -22,7 +22,7 @@
  * @package    PHPExcel_Reader
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -211,6 +211,12 @@ class PHPExcel_Reader_Excel2007 implements PHPExcel_Reader_IReader
 
 						$sharedFormulas = array();
 						
+						if (isset($xmlSheet->sheetViews) && isset($xmlSheet->sheetViews->sheetView)) {
+							if (isset($xmlSheet->sheetViews->sheetView['showGridLines'])) { 
+								$docSheet->setShowGridLines($xmlSheet->sheetViews->sheetView['showGridLines'] ? true : false);
+							}
+						}
+						
 						if (isset($xmlSheet->sheetPr) && isset($xmlSheet->sheetPr->outlinePr)) {
 							if (isset($xmlSheet->sheetPr->outlinePr['summaryRight']) && $xmlSheet->sheetPr->outlinePr['summaryRight'] == false) {
 								$docSheet->setShowSummaryRight(false);
@@ -227,7 +233,7 @@ class PHPExcel_Reader_Excel2007 implements PHPExcel_Reader_IReader
 						
 						if (isset($xmlSheet->cols) && !$this->_readDataOnly) {
 							foreach ($xmlSheet->cols->col as $col) {
-								for ($i = intval($col["min"]) - 1; $i < intval($col["max"]) && $i < 256; $i++) {
+								for ($i = intval($col["min"]) - 1; $i < intval($col["max"]); $i++) {
 									if ($col["bestFit"]) {
 										$docSheet->getColumnDimension(PHPExcel_Cell::stringFromColumnIndex($i))->setAutoSize(true);
 									}
@@ -241,6 +247,10 @@ class PHPExcel_Reader_Excel2007 implements PHPExcel_Reader_IReader
 										$docSheet->getColumnDimension(PHPExcel_Cell::stringFromColumnIndex($i))->setOutlineLevel(intval($col["outlineLevel"]));
 									}
 									$docSheet->getColumnDimension(PHPExcel_Cell::stringFromColumnIndex($i))->setWidth(floatval($col["width"]));
+									
+									if (intval($col["max"]) == 16384) {
+										break;
+									}
 								}
 							}
 						}
@@ -306,16 +316,16 @@ class PHPExcel_Reader_Excel2007 implements PHPExcel_Reader_IReader
 											// Shared formula?
 											if (isset($c->f['t']) && strtolower((string)$c->f['t']) == 'shared') {
 												$instance = (string)$c->f['si'];
-												
+
 												if (!isset($sharedFormulas[(string)$c->f['si']])) {
 													$sharedFormulas[$instance] = array('master' => $r,
 																						'formula' => $value);
 												} else {											
 													$master = PHPExcel_Cell::coordinateFromString($sharedFormulas[$instance]['master']);
 													$current = PHPExcel_Cell::coordinateFromString($r);
-													
+
 													$difference = array(0, 0);
-													$difference[0] = $current[0] - $master[0];
+													$difference[0] = PHPExcel_Cell::columnIndexFromString($current[0]) - PHPExcel_Cell::columnIndexFromString( $master[0]);
 													$difference[1] = $current[1] - $master[1];
 
 													$helper = PHPExcel_ReferenceHelper::getInstance();
@@ -325,7 +335,7 @@ class PHPExcel_Reader_Excel2007 implements PHPExcel_Reader_IReader
 														$difference[0],
 														$difference[1]
 													);
-														
+
 													$value = $x;
 												}
 											}
@@ -646,72 +656,83 @@ class PHPExcel_Reader_Excel2007 implements PHPExcel_Reader_IReader
 									$fileDrawing = $drawings[(string) self::array_item($drawing->attributes("http://schemas.openxmlformats.org/officeDocument/2006/relationships"), "id")];
 									$relsDrawing = simplexml_load_string($zip->getFromName( dirname($fileDrawing) . "/_rels/" . basename($fileDrawing) . ".rels") ); //~ http://schemas.openxmlformats.org/package/2006/relationships");
 									$images = array();
-									foreach ($relsDrawing->Relationship as $ele) {
-										if ($ele["Type"] == "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image") {
-											$images[(string) $ele["Id"]] = self::dir_add($fileDrawing, $ele["Target"]);
+									
+									if ($relsDrawing && $relsDrawing->Relationship) {
+										foreach ($relsDrawing->Relationship as $ele) {
+											if ($ele["Type"] == "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image") {
+												$images[(string) $ele["Id"]] = self::dir_add($fileDrawing, $ele["Target"]);
+											}
 										}
 									}
 									$xmlDrawing = simplexml_load_string($zip->getFromName($fileDrawing))->children("http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing");
 									
-									foreach ($xmlDrawing->oneCellAnchor as $oneCellAnchor) {
-										$blip = $oneCellAnchor->pic->blipFill->children("http://schemas.openxmlformats.org/drawingml/2006/main")->blip;
-										$xfrm = $oneCellAnchor->pic->spPr->children("http://schemas.openxmlformats.org/drawingml/2006/main")->xfrm;
-										$outerShdw = $oneCellAnchor->pic->spPr->children("http://schemas.openxmlformats.org/drawingml/2006/main")->effectLst->outerShdw;
-										$objDrawing = new PHPExcel_Worksheet_Drawing;
-										$objDrawing->setName((string) self::array_item($oneCellAnchor->pic->nvPicPr->cNvPr->attributes(), "name"));
-										$objDrawing->setDescription((string) self::array_item($oneCellAnchor->pic->nvPicPr->cNvPr->attributes(), "descr"));
-										$objDrawing->setPath("zip://$pFilename#" . $images[(string) self::array_item($blip->attributes("http://schemas.openxmlformats.org/officeDocument/2006/relationships"), "embed")], false);								
-										$objDrawing->setCoordinates(PHPExcel_Cell::stringFromColumnIndex($oneCellAnchor->from->col) . ($oneCellAnchor->from->row + 1));
-										$objDrawing->setOffsetX(PHPExcel_Shared_Drawing::EMUToPixels($oneCellAnchor->from->colOff));
-										$objDrawing->setOffsetY(PHPExcel_Shared_Drawing::EMUToPixels($oneCellAnchor->from->rowOff));
-										$objDrawing->setResizeProportional(false);
-										$objDrawing->setWidth(PHPExcel_Shared_Drawing::EMUToPixels(self::array_item($oneCellAnchor->ext->attributes(), "cx")));
-										$objDrawing->setHeight(PHPExcel_Shared_Drawing::EMUToPixels(self::array_item($oneCellAnchor->ext->attributes(), "cy")));
-										if ($xfrm) {
-											$objDrawing->setRotation(PHPExcel_Shared_Drawing::angleToDegrees(self::array_item($xfrm->attributes(), "rot")));
+									if ($xmlDrawing->oneCellAnchor) {
+										foreach ($xmlDrawing->oneCellAnchor as $oneCellAnchor) {
+											if ($oneCellAnchor->pic->blipFill) {
+												$blip = $oneCellAnchor->pic->blipFill->children("http://schemas.openxmlformats.org/drawingml/2006/main")->blip;
+												$xfrm = $oneCellAnchor->pic->spPr->children("http://schemas.openxmlformats.org/drawingml/2006/main")->xfrm;
+												$outerShdw = $oneCellAnchor->pic->spPr->children("http://schemas.openxmlformats.org/drawingml/2006/main")->effectLst->outerShdw;
+												$objDrawing = new PHPExcel_Worksheet_Drawing;
+												$objDrawing->setName((string) self::array_item($oneCellAnchor->pic->nvPicPr->cNvPr->attributes(), "name"));
+												$objDrawing->setDescription((string) self::array_item($oneCellAnchor->pic->nvPicPr->cNvPr->attributes(), "descr"));
+												$objDrawing->setPath("zip://$pFilename#" . $images[(string) self::array_item($blip->attributes("http://schemas.openxmlformats.org/officeDocument/2006/relationships"), "embed")], false);								
+												$objDrawing->setCoordinates(PHPExcel_Cell::stringFromColumnIndex($oneCellAnchor->from->col) . ($oneCellAnchor->from->row + 1));
+												$objDrawing->setOffsetX(PHPExcel_Shared_Drawing::EMUToPixels($oneCellAnchor->from->colOff));
+												$objDrawing->setOffsetY(PHPExcel_Shared_Drawing::EMUToPixels($oneCellAnchor->from->rowOff));
+												$objDrawing->setResizeProportional(false);
+												$objDrawing->setWidth(PHPExcel_Shared_Drawing::EMUToPixels(self::array_item($oneCellAnchor->ext->attributes(), "cx")));
+												$objDrawing->setHeight(PHPExcel_Shared_Drawing::EMUToPixels(self::array_item($oneCellAnchor->ext->attributes(), "cy")));
+												if ($xfrm) {
+													$objDrawing->setRotation(PHPExcel_Shared_Drawing::angleToDegrees(self::array_item($xfrm->attributes(), "rot")));
+												}
+												if ($outerShdw) {
+													$shadow = $objDrawing->getShadow();
+													$shadow->setVisible(true);
+													$shadow->setBlurRadius(PHPExcel_Shared_Drawing::EMUTopixels(self::array_item($outerShdw->attributes(), "blurRad")));
+													$shadow->setDistance(PHPExcel_Shared_Drawing::EMUTopixels(self::array_item($outerShdw->attributes(), "dist")));
+													$shadow->setDirection(PHPExcel_Shared_Drawing::angleToDegrees(self::array_item($outerShdw->attributes(), "dir")));
+													$shadow->setAlignment((string) self::array_item($outerShdw->attributes(), "algn"));
+													$shadow->getColor()->setRGB(self::array_item($outerShdw->srgbClr->attributes(), "val"));
+													$shadow->setAlpha(self::array_item($outerShdw->srgbClr->alpha->attributes(), "val") / 1000);
+												}
+												$objDrawing->setWorksheet($docSheet);
+											}
 										}
-										if ($outerShdw) {
-											$shadow = $objDrawing->getShadow();
-											$shadow->setVisible(true);
-											$shadow->setBlurRadius(PHPExcel_Shared_Drawing::EMUTopixels(self::array_item($outerShdw->attributes(), "blurRad")));
-											$shadow->setDistance(PHPExcel_Shared_Drawing::EMUTopixels(self::array_item($outerShdw->attributes(), "dist")));
-											$shadow->setDirection(PHPExcel_Shared_Drawing::angleToDegrees(self::array_item($outerShdw->attributes(), "dir")));
-											$shadow->setAlignment((string) self::array_item($outerShdw->attributes(), "algn"));
-											$shadow->getColor()->setRGB(self::array_item($outerShdw->srgbClr->attributes(), "val"));
-											$shadow->setAlpha(self::array_item($outerShdw->srgbClr->alpha->attributes(), "val") / 1000);
-										}
-										$objDrawing->setWorksheet($docSheet);
 									}
-									foreach ($xmlDrawing->twoCellAnchor as $twoCellAnchor) {
-										$blip = $twoCellAnchor->pic->blipFill->children("http://schemas.openxmlformats.org/drawingml/2006/main")->blip;
-										$xfrm = $twoCellAnchor->pic->spPr->children("http://schemas.openxmlformats.org/drawingml/2006/main")->xfrm;
-										$outerShdw = $twoCellAnchor->pic->spPr->children("http://schemas.openxmlformats.org/drawingml/2006/main")->effectLst->outerShdw;
-										$objDrawing = new PHPExcel_Worksheet_Drawing;
-										$objDrawing->setName((string) self::array_item($twoCellAnchor->pic->nvPicPr->cNvPr->attributes(), "name"));
-										$objDrawing->setDescription((string) self::array_item($twoCellAnchor->pic->nvPicPr->cNvPr->attributes(), "descr"));
-										$objDrawing->setPath("zip://$pFilename#" . $images[(string) self::array_item($blip->attributes("http://schemas.openxmlformats.org/officeDocument/2006/relationships"), "embed")], false);								
-										$objDrawing->setCoordinates(PHPExcel_Cell::stringFromColumnIndex($twoCellAnchor->from->col) . ($twoCellAnchor->from->row + 1));
-										$objDrawing->setOffsetX(PHPExcel_Shared_Drawing::EMUToPixels($twoCellAnchor->from->colOff));
-										$objDrawing->setOffsetY(PHPExcel_Shared_Drawing::EMUToPixels($twoCellAnchor->from->rowOff));
-										$objDrawing->setResizeProportional(false);
-										
-										$objDrawing->setWidth(PHPExcel_Shared_Drawing::EMUToPixels(self::array_item($xfrm->ext->attributes(), "cx")));
-										$objDrawing->setHeight(PHPExcel_Shared_Drawing::EMUToPixels(self::array_item($xfrm->ext->attributes(), "cy")));
-										
-										if ($xfrm) {
-											$objDrawing->setRotation(PHPExcel_Shared_Drawing::angleToDegrees(self::array_item($xfrm->attributes(), "rot")));
+									if ($xmlDrawing->twoCellAnchor) {
+										foreach ($xmlDrawing->twoCellAnchor as $twoCellAnchor) {
+											if ($twoCellAnchor->pic->blipFill) {
+												$blip = $twoCellAnchor->pic->blipFill->children("http://schemas.openxmlformats.org/drawingml/2006/main")->blip;
+												$xfrm = $twoCellAnchor->pic->spPr->children("http://schemas.openxmlformats.org/drawingml/2006/main")->xfrm;
+												$outerShdw = $twoCellAnchor->pic->spPr->children("http://schemas.openxmlformats.org/drawingml/2006/main")->effectLst->outerShdw;
+												$objDrawing = new PHPExcel_Worksheet_Drawing;
+												$objDrawing->setName((string) self::array_item($twoCellAnchor->pic->nvPicPr->cNvPr->attributes(), "name"));
+												$objDrawing->setDescription((string) self::array_item($twoCellAnchor->pic->nvPicPr->cNvPr->attributes(), "descr"));
+												$objDrawing->setPath("zip://$pFilename#" . $images[(string) self::array_item($blip->attributes("http://schemas.openxmlformats.org/officeDocument/2006/relationships"), "embed")], false);								
+												$objDrawing->setCoordinates(PHPExcel_Cell::stringFromColumnIndex($twoCellAnchor->from->col) . ($twoCellAnchor->from->row + 1));
+												$objDrawing->setOffsetX(PHPExcel_Shared_Drawing::EMUToPixels($twoCellAnchor->from->colOff));
+												$objDrawing->setOffsetY(PHPExcel_Shared_Drawing::EMUToPixels($twoCellAnchor->from->rowOff));
+												$objDrawing->setResizeProportional(false);
+												
+												$objDrawing->setWidth(PHPExcel_Shared_Drawing::EMUToPixels(self::array_item($xfrm->ext->attributes(), "cx")));
+												$objDrawing->setHeight(PHPExcel_Shared_Drawing::EMUToPixels(self::array_item($xfrm->ext->attributes(), "cy")));
+												
+												if ($xfrm) {
+													$objDrawing->setRotation(PHPExcel_Shared_Drawing::angleToDegrees(self::array_item($xfrm->attributes(), "rot")));
+												}
+												if ($outerShdw) {
+													$shadow = $objDrawing->getShadow();
+													$shadow->setVisible(true);
+													$shadow->setBlurRadius(PHPExcel_Shared_Drawing::EMUTopixels(self::array_item($outerShdw->attributes(), "blurRad")));
+													$shadow->setDistance(PHPExcel_Shared_Drawing::EMUTopixels(self::array_item($outerShdw->attributes(), "dist")));
+													$shadow->setDirection(PHPExcel_Shared_Drawing::angleToDegrees(self::array_item($outerShdw->attributes(), "dir")));
+													$shadow->setAlignment((string) self::array_item($outerShdw->attributes(), "algn"));
+													$shadow->getColor()->setRGB(self::array_item($outerShdw->srgbClr->attributes(), "val"));
+													$shadow->setAlpha(self::array_item($outerShdw->srgbClr->alpha->attributes(), "val") / 1000);
+												}
+												$objDrawing->setWorksheet($docSheet);
+											}
 										}
-										if ($outerShdw) {
-											$shadow = $objDrawing->getShadow();
-											$shadow->setVisible(true);
-											$shadow->setBlurRadius(PHPExcel_Shared_Drawing::EMUTopixels(self::array_item($outerShdw->attributes(), "blurRad")));
-											$shadow->setDistance(PHPExcel_Shared_Drawing::EMUTopixels(self::array_item($outerShdw->attributes(), "dist")));
-											$shadow->setDirection(PHPExcel_Shared_Drawing::angleToDegrees(self::array_item($outerShdw->attributes(), "dir")));
-											$shadow->setAlignment((string) self::array_item($outerShdw->attributes(), "algn"));
-											$shadow->getColor()->setRGB(self::array_item($outerShdw->srgbClr->attributes(), "val"));
-											$shadow->setAlpha(self::array_item($outerShdw->srgbClr->alpha->attributes(), "val") / 1000);
-										}
-										$objDrawing->setWorksheet($docSheet);
 									}
 									
 								}
@@ -882,7 +903,7 @@ class PHPExcel_Reader_Excel2007 implements PHPExcel_Reader_IReader
 			}
 				
 			$docStyle->getAlignment()->setTextRotation(intval($textRotation));
-			$docStyle->getAlignment()->setWrapText( (string)$style->alignment["wrapText"] == "true" );
+			$docStyle->getAlignment()->setWrapText( (string)$style->alignment["wrapText"] == "true" || (string)$style->alignment["wrapText"] == "1" );
 		}
 		
 		// protection
@@ -924,30 +945,30 @@ class PHPExcel_Reader_Excel2007 implements PHPExcel_Reader_IReader
 				$objText = $value->createTextRun( PHPExcel_Shared_String::ControlCharacterOOXML2PHP( (string) $run->t ) );
 							
 				if (isset($run->rPr->rFont["val"])) {
-					$objText->getFont()->setName($run->rPr->rFont["val"]);
+					$objText->getFont()->setName((string) $run->rPr->rFont["val"]);
 				}
 												
 				if (isset($run->rPr->sz["val"])) {
-					$objText->getFont()->setSize($run->rPr->sz["val"]);
+					$objText->getFont()->setSize((string) $run->rPr->sz["val"]);
 				}
 												
 				if (isset($run->rPr->color)) {
 					$objText->getFont()->setColor( new PHPExcel_Style_Color( $this->_readColor($run->rPr->color) ) );
 				}
 												
-				if (isset($run->rPr->b["val"]) && ($run->rPr->b["val"] == 'true' || $run->rPr->b["val"] == '1')) {
+				if (isset($run->rPr->b["val"]) && ((string) $run->rPr->b["val"] == 'true' || (string) $run->rPr->b["val"] == '1')) {
 					$objText->getFont()->setBold(true);
 				}
 												
-				if (isset($run->rPr->i["val"]) && ($run->rPr->i["val"] == 'true' || $run->rPr->i["val"] == '1')) {
+				if (isset($run->rPr->i["val"]) && ((string) $run->rPr->i["val"] == 'true' || (string) $run->rPr->i["val"] == '1')) {
 					$objText->getFont()->setItalic(true);
 				}
 											
-				if (isset($run->rPr->u["val"]) && ($run->rPr->u["val"] == 'true' || $run->rPr->u["val"] == '1')) {
+				if (isset($run->rPr->u["val"]) && ((string) $run->rPr->u["val"] == 'true' || (string) $run->rPr->u["val"] == '1')) {
 					$objText->getFont()->setUnderline(true);
 				}
 											
-				if (isset($run->rPr->strike["val"])  && ($run->rPr->strike["val"] == 'true' || $run->rPr->strike["val"] == '1')) {
+				if (isset($run->rPr->strike["val"])  && ((string) $run->rPr->strike["val"] == 'true' || (string) $run->rPr->strike["val"] == '1')) {
 					$objText->getFont()->setStriketrough(true);
 				}
 			}

@@ -22,7 +22,7 @@
  * @package    PHPExcel_Shared
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -114,7 +114,7 @@ class PHPExcel_Shared_Drawing
 	 * @return 	int			Angle
 	 */
 	public static function degreesToAngle($pValue = 0) {
-		return round($pValue * 60000);
+		return (int)round($pValue * 60000);
 	}
 	
 	/**

@@ -22,7 +22,7 @@
  * @package    PHPExcel_Shared
  * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.2, 2008-06-23
  */
 
 
@@ -52,6 +52,14 @@ class PHPExcel_Shared_Font
 		// If it is rich text, use rich text...
 		if ($columnText instanceof PHPExcel_RichText) {
 			$columnText = $columnText->getPlainText();
+		}
+		
+		// Only measure the part before the first newline character
+		if (strpos($columnText, "\r") !== false) {
+			$columnText = substr($columnText, 0, strpos($columnText, "\r"));
+		}
+		if (strpos($columnText, "\n") !== false) {
+			$columnText = substr($columnText, 0, strpos($columnText, "\n"));
 		}
 		
 		// Calculate column width
