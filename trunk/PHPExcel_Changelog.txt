@@ -19,17 +19,72 @@
 *
 * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
 * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
-* @version    ##VERSION##, ##DATE##
+* @version    1.6.3, 2008-08-25
 **************************************************************************************
 
 
 To be planned:
+- Bugfix:   (MBaker) Work item 7367 - Modified PHPExcel_Shared_Date::PHPToExcel() to force UTC
+- General:  (MB) Applied patch 1629
+- General:  (MB) Applied patch 1644
+- General:  (MB) Work item 6485 - Implement repeatRow and repeatColumn in Excel5 writer
+- General:  (MB) Work item 6838 - Remove scene3d filter in Excel2007 drawing
+- Feature:  (MBaker) Work item 2346 - Implement CHOOSE and INDEX Lookup/Reference Functions
+- Feature:  (MBaker) Work item 2346 - Implement CLEAN Text Functions
+- Feature:  (MBaker) Work item 2346 - Implement YEARFRAC Date/Time Functions
+- Feature:  (MB) Work item 6508 - Implement 2 options for print/show gridlines
+- Feature:  (MB) Work item 7270 - Add VLOOKUP function (contribution)
+- Feature:  (MB) Work item 7182 - Implemented: ShrinkToFit
+- Feature:  (MB) Work item 7218 - Row heights not updated correctly when inserting new rows
+- Feature:  (MB) Work item 7157 - Copy worksheets within the same workbook
+- Feature:  (ET) Work item 7290 - Excel5 reader style support: horizontal and vertical alignment plus text wrap
+- Feature:  (ET) Work item 7294 - Excel5 reader support for merged cells
+- Feature:  (ET) Work item 7296 - Excel5 reader: Sheet Protection
+- Feature:  (ET) Work item 7297 - Excel5 reader: Password for sheet protection
+- Feature:  (ET) Work item 7299 - Excel5 reader: Column width
+- Feature:  (ET) Work item 7301 - Excel5 reader: Row height
+- Feature:  (ET) Work item 7304 - Excel5 reader: Font support
+- Feature:  (ET) Work item 7324 - Excel5 reader: support for locked cells
+- Feature:  (ET) Work item 7330 - Excel5 reader style support: Fill (background colors and patterns)
+- Feature:  (ET) Work item 7332 - Excel5 reader style support: Borders (style and color)
+- Feature:  (ET) Work item 7346 - Excel5 reader: Rich-Text support
+- Feature:  (MB) Work item 7313 - Read Excel built-in number formats with Excel 2007 reader
+- Feature:  (ET) Work item 7317 - Excel5 reader: Number format support
+- Feature:  (MB) Work item 7362 - Creating a copy of PHPExcel object
+- Feature:  (ET) Work item 7373 - Excel5 reader: support for row / column outline (group)
+- Feature:  (MB) Work item 7380 - Implement default row/column sizes
+- Feature:  (MB) Work item 7364 - Writer HTML - option to return styles and table separately
+- Feature:  (ET) Work item 7393 - Excel5 reader: Support for remaining built-in number formats
+- Bugfix:   (MBaker) Fixed rounding in HOUR MINUTE and SECOND Time functions, and improved performance for these
+- Bugfix:   (MBaker) Fix to TRIM function
+- Bugfix:   (MBaker) Fixed range validation in TIME Functions.php
+- Bugfix:   (MBaker) EDATE and EOMONTH functions now return date values based on the returnDateType flag
+- Bugfix:   (MBaker) Write date values that are the result of a calculation function correctly as Excel serialized dates rather than PHP serialized date values
+- Bugfix:   (MB) Work item 6690 - Excel2007 reader not always reading boolean correctly
+- Bugfix:   (MB) Work item 6275 - Columns above IZ
+- Bugfix:   (MB) Work item 6853 - Other locale than English causes Excel2007 writer to produce broken xlsx
+- Bugfix:   (MB) Work item 7061 - Typo: Number_fromat in NumberFormat.php
+- Bugfix:   (MB) Work item 6865 - Bug in Worksheet_BaseDrawing setWidth()
+- Bugfix:   (MB) Work item 6891 - PDF writer collapses column width for merged cells
+- Bugfix:   (MB) Work item 6867 - Issues with drawings filenames
+- Bugfix:   (MB) Work item 7073 - fromArray() local variable isn't defined
+- Bugfix:   (MB) Work item 7276 - PHPExcel_Writer_Excel5->setTempDir() not passed to all classes involved in writing to a file
+- Bugfix:   (MB) Work item 7277 - Excel5 reader not handling UTF-8 properly
+- Bugfix:   (MB) Work item 7327 - If you write a 0 value in cell, cell shows as empty
+- Bugfix:   (MB) Work item 7302 - Excel2007 writer: Row height ignored for empty rows
+- Bugfix:   (MB) Work item 7281 - Excel2007 (comments related error)
+- Bugfix:   (MB) Work item 7345 - Column width in other locale
+- Bugfix:   (MB) Work item 7347 - Excel2007 reader not reading underlined Rich-Text
+- Bugfix:   (ET) Work item 7357 - Excel5 reader converting booleans to strings
+- Bugfix:   (MB) Work item 7365 - Recursive Object Memory Leak
+- Bugfix:   (MB) Work item 7372 - Excel2007 writer ignoring row dimensions without cells
+- Bugfix:   (ET) Work item 7382 - Excel5 reader is converting formatted numbers / dates to strings
 
 
 2008/06/23 (v1.6.2):
 - General:  (MB) Work item 6088 - Document style array values
 - General:  (MB) Applied patch 1195
-- General:  (MB) Work item 6178 - Redirecting output to a clientís web browser - http headers
+- General:  (MB) Work item 6178 - Redirecting output to a client’s web browser - http headers
 - General:  (MB) Work item 6187 - Improve worksheet garbage collection
 - General:  (MBaker) Functions that return date values can now be configured to return as Excel serialized date/time, PHP serialized date/time, or a PHP date/time object.
 - General:  (MBaker) Functions that explicitly accept dates as parameters now permit values as Excel serialized date/time, PHP serialized date/time, a valid date string, or a PHP date/time object.
