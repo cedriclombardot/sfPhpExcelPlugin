@@ -23,7 +23,7 @@ sfPhpExcelPlugin work with [http://www.phpexcel.net PHPExcel]. It can generate M
   * For testing
   
   {{{
-    php plugins/sfPhpExcelPlugin/examples/01simple.php
+    php plugins/sfPhpExcelPlugin/examples_1_2/01simple.php
   }}}
 
 
@@ -36,5 +36,6 @@ sfPhpExcelPlugin work with [http://www.phpexcel.net PHPExcel]. It can generate M
 == Changelog ==
 
 === TRUNK ===
+ * Adapt the examples to version 1.2
  * PHPExcel (Add externals for libraries)
  * Modification of examples to work with symfony
