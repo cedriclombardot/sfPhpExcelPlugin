@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (C) 2006 - 2008 PHPExcel
+ * Copyright (C) 2006 - 2009 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,15 +20,15 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2009 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @version    1.6.7, 2009-04-22
  */
 
 include "05featuredemo.inc.php";
 
 echo date('H:i:s') . " Write to CSV format\n";
-$objWriter = new PHPExcel_Writer_CSV($objPHPExcel);
+$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'CSV');
 $objWriter->setDelimiter(';');
 $objWriter->setEnclosure('');
 $objWriter->setLineEnding("\r\n");
@@ -36,7 +36,7 @@ $objWriter->setSheetIndex(0);
 $objWriter->save(str_replace('.php', '.csv', __FILE__));
 
 echo date('H:i:s') . " Read from CSV format\n";
-$objReader = new PHPExcel_Reader_CSV();
+$objReader = PHPExcel_IOFactory::createReader('CSV');
 $objReader->setDelimiter(';');
 $objReader->setEnclosure('');
 $objReader->setLineEnding("\r\n");
@@ -44,7 +44,7 @@ $objReader->setSheetIndex(0);
 $objPHPExcelFromCSV = $objReader->load(str_replace('.php', '.csv', __FILE__));
 
 echo date('H:i:s') . " Write to Excel2007 format\n";
-$objWriter2007 = new PHPExcel_Writer_Excel2007($objPHPExcelFromCSV);
+$objWriter2007 = PHPExcel_IOFactory::createWriter($objPHPExcelFromCSV, 'Excel2007');
 $objWriter2007->save(str_replace('.php', '.xlsx', __FILE__));
 
 // Echo memory peak usage

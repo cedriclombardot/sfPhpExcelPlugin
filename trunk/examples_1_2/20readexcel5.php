@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (C) 2006 - 2008 PHPExcel
+ * Copyright (C) 2006 - 2009 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2009 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.7, 2009-04-22
  */
 
 /** Error reporting */
@@ -31,22 +31,15 @@ error_reporting(E_ALL);
 /* Modified by Bertrand Zuchuat */
 require_once 'symfony.inc.php';
 
-/** PHPExcel_Writer_Exce5 */
-require 'PHPExcel/Reader/Excel5.php';
-include 'PHPExcel/Writer/Excel2007.php';
-
-$file_path = dirname(__FILE__) . '/14excel5.xls';
-
-if (!file_exists($file_path)) {
+if (!file_exists("14excel5.xls")) {
 	exit("Please run 14excel5.php first.\n");
 }
 
 echo date('H:i:s') . " Load from Excel5 file\n";
-$objReader = new PHPExcel_Reader_Excel5;
-$objPHPExcel = $objReader->load($file_path);
+$objPHPExcel = PHPExcel_IOFactory::load("14excel5.xls");
 
 echo date('H:i:s') . " Write to Excel2007 format\n";
-$objWriter = new PHPExcel_Writer_Excel2007 ($objPHPExcel);
+$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 $objWriter->save(str_replace('.php', '.xlsx', __FILE__));
 
 // Echo memory peak usage

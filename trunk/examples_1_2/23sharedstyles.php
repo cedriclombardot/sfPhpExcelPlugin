@@ -22,7 +22,7 @@
  * @package    PHPExcel
  * @copyright  Copyright (c) 2006 - 2009 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.5, 2009-01-05
+ * @version    1.6.7, 2009-04-22
  */
 
 /* Modified by Bertrand Zuchuat */
@@ -86,7 +86,3 @@ echo date('H:i:s') . " Peak memory usage: " . (memory_get_peak_usage(true) / 102
 
 // Echo done
 echo date('H:i:s') . " Done writing file.\r\n";
-
-
-
-?>

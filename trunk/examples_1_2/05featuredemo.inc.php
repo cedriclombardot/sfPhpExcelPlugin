@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (C) 2006 - 2008 PHPExcel
+ * Copyright (C) 2006 - 2009 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2009 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @version    1.6.7, 2009-04-22
  */
 
 /* Modified by Bertrand Zuchuat */
@@ -47,8 +47,8 @@ $objPHPExcel->getProperties()->setCategory("Test result file");
 echo date('H:i:s') . " Add some data\n";
 $objPHPExcel->setActiveSheetIndex(0);
 $objPHPExcel->getActiveSheet()->setCellValue('B1', 'Invoice');
-$objPHPExcel->getActiveSheet()->setCellValue('D1', time());
-$objPHPExcel->getActiveSheet()->getStyle('D1')->getNumberFormat()->setFormatCode(PHPExcel_Style_NumberFormat::FORMAT_DATE_YYYYMMDDSLASH);
+$objPHPExcel->getActiveSheet()->setCellValue('D1', PHPExcel_Shared_Date::PHPToExcel( gmmktime(0,0,0,date('m'),date('d'),date('Y')) ));
+$objPHPExcel->getActiveSheet()->getStyle('D1')->getNumberFormat()->setFormatCode(PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX15);
 $objPHPExcel->getActiveSheet()->setCellValue('E1', '#12566');
 
 $objPHPExcel->getActiveSheet()->setCellValue('A3', 'Product Id');
@@ -103,6 +103,10 @@ $objCommentRichText = $objPHPExcel->getActiveSheet()->getComment('E13')->getText
 $objCommentRichText->getFont()->setBold(true);
 $objPHPExcel->getActiveSheet()->getComment('E13')->getText()->createTextRun("\r\n");
 $objPHPExcel->getActiveSheet()->getComment('E13')->getText()->createTextRun('Total amount on the current invoice, including VAT.');
+$objPHPExcel->getActiveSheet()->getComment('E13')->setWidth('100pt');
+$objPHPExcel->getActiveSheet()->getComment('E13')->setHeight('100pt');
+$objPHPExcel->getActiveSheet()->getComment('E13')->setMarginLeft('150pt');
+$objPHPExcel->getActiveSheet()->getComment('E13')->getFillColor()->setRGB('EEEEEE');
 
 
 // Add rich-text string
@@ -137,6 +141,7 @@ $objPHPExcel->getActiveSheet()->duplicateStyle( $objPHPExcel->getActiveSheet()->
 echo date('H:i:s') . " Set column widths\n";
 $objPHPExcel->getActiveSheet()->getColumnDimension('B')->setAutoSize(true);
 $objPHPExcel->getActiveSheet()->getColumnDimension('D')->setWidth(12);
+$objPHPExcel->getActiveSheet()->getColumnDimension('E')->setWidth(12);
 
 // Set fonts
 echo date('H:i:s') . " Set fonts\n";
@@ -160,6 +165,8 @@ $objPHPExcel->getActiveSheet()->getStyle('D13')->getAlignment()->setHorizontal(P
 
 $objPHPExcel->getActiveSheet()->getStyle('A18')->getAlignment()->setHorizontal(PHPExcel_Style_Alignment::HORIZONTAL_JUSTIFY);
 $objPHPExcel->getActiveSheet()->getStyle('A18')->getAlignment()->setVertical(PHPExcel_Style_Alignment::VERTICAL_CENTER);
+
+$objPHPExcel->getActiveSheet()->getStyle('B5')->getAlignment()->setShrinkToFit(true);
 
 // Set column borders
 echo date('H:i:s') . " Set column borders\n";
@@ -307,7 +314,7 @@ echo date('H:i:s') . " Add a drawing to the worksheet\n";
 $objDrawing = new PHPExcel_Worksheet_Drawing();
 $objDrawing->setName('Logo');
 $objDrawing->setDescription('Logo');
-$objDrawing->setPath(dirname(__FILE__) . '/images/officelogo.jpg');
+$objDrawing->setPath('./images/officelogo.jpg');
 $objDrawing->setHeight(36);
 $objDrawing->setWorksheet($objPHPExcel->getActiveSheet());
 
@@ -316,7 +323,7 @@ echo date('H:i:s') . " Add a drawing to the worksheet\n";
 $objDrawing = new PHPExcel_Worksheet_Drawing();
 $objDrawing->setName('Paid');
 $objDrawing->setDescription('Paid');
-$objDrawing->setPath(dirname(__FILE__) . '/images/paid.png');
+$objDrawing->setPath('./images/paid.png');
 $objDrawing->setCoordinates('B15');
 $objDrawing->setOffsetX(110);
 $objDrawing->setRotation(25);
@@ -329,10 +336,10 @@ echo date('H:i:s') . " Add a drawing to the worksheet\n";
 $objDrawing = new PHPExcel_Worksheet_Drawing();
 $objDrawing->setName('PHPExcel logo');
 $objDrawing->setDescription('PHPExcel logo');
-$objDrawing->setPath(dirname(__FILE__) . '/images/phpexcel_logo.gif');
+$objDrawing->setPath('./images/phpexcel_logo.gif');
 $objDrawing->setHeight(36);
 $objDrawing->setCoordinates('D24');
-$objDrawing->setOffsetX(-10);
+$objDrawing->setOffsetX(10);
 $objDrawing->setWorksheet($objPHPExcel->getActiveSheet());
 
 // Play around with inserting and removing rows and columns
@@ -401,7 +408,7 @@ echo date('H:i:s') . " Add a drawing to the worksheet\n";
 $objDrawing = new PHPExcel_Worksheet_Drawing();
 $objDrawing->setName('Terms and conditions');
 $objDrawing->setDescription('Terms and conditions');
-$objDrawing->setPath(dirname(__FILE__) . '/images/termsconditions.jpg');
+$objDrawing->setPath('./images/termsconditions.jpg');
 $objDrawing->setCoordinates('B14');
 $objDrawing->setWorksheet($objPHPExcel->getActiveSheet());
 

@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (C) 2006 - 2008 PHPExcel
+ * Copyright (C) 2006 - 2009 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2009 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @version    1.6.7, 2009-04-22
  */
 
 /* Modified by Bertrand Zuchuat */
@@ -30,16 +30,15 @@ require_once 'symfony.inc.php';
 
 $file_path = dirname(__FILE__) . '/05featuredemo.xlsx';
 
-if (!file_exists($file_path)) {
+if (!file_exists("05featuredemo.xlsx")) {
 	exit("Please run 05featuredemo.php first.\n");
 }
 
 echo date('H:i:s') . " Load from Excel2007 file\n";
-$objReader = new PHPExcel_Reader_Excel2007;
-$objPHPExcel = $objReader->load($file_path);
+$objPHPExcel = PHPExcel_IOFactory::load("05featuredemo.xlsx");
 
 echo date('H:i:s') . " Write to Excel2007 format\n";
-$objWriter = new PHPExcel_Writer_Excel2007($objPHPExcel);
+$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 $objWriter->save(str_replace('.php', '.xlsx', __FILE__));
 
 

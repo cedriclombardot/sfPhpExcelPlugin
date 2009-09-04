@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (C) 2006 - 2008 PHPExcel
+ * Copyright (C) 2006 - 2009 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,17 +20,21 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2009 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.1, 2008-04-28
+ * @version    1.6.7, 2009-04-22
  */
 
 include "05featuredemo.inc.php";
 
-include 'PHPExcel/Writer/PDF.php';
+echo date('H:i:s') . " Hide grid lines\n";
+$objPHPExcel->getActiveSheet()->setShowGridLines(false);
+
+echo date('H:i:s') . " Set orientation to landscape\n";
+$objPHPExcel->getActiveSheet()->getPageSetup()->setOrientation(PHPExcel_Worksheet_PageSetup::ORIENTATION_LANDSCAPE);
 
 echo date('H:i:s') . " Write to PDF format\n";
-$objWriter = new PHPExcel_Writer_PDF($objPHPExcel);
+$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'PDF');
 $objWriter->setSheetIndex(0);
 $objWriter->save(str_replace('.php', '.pdf', __FILE__));
 

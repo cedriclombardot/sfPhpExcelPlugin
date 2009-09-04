@@ -25,8 +25,22 @@
  * @version    1.6.7, 2009-04-22
  */
 
+/** Error reporting */
+error_reporting(E_ALL);
+
 /* Modified by Bertrand Zuchuat */
 require_once 'symfony.inc.php';
+
+/** PHPExcel_Cell_AdvancedValueBinder */
+require_once 'PHPExcel/Cell/AdvancedValueBinder.php';
+
+// Set timezone
+echo date('H:i:s') . " Set timezone\n";
+date_default_timezone_set('UTC');
+
+// Set value binder
+echo date('H:i:s') . " Set value binder\n";
+PHPExcel_Cell::setValueBinder( new PHPExcel_Cell_AdvancedValueBinder() );
 
 // Create new PHPExcel object
 echo date('H:i:s') . " Create new PHPExcel object\n";
@@ -42,23 +56,46 @@ $objPHPExcel->getProperties()->setDescription("Test document for Office 2007 XLS
 $objPHPExcel->getProperties()->setKeywords("office 2007 openxml php");
 $objPHPExcel->getProperties()->setCategory("Test result file");
 
-// Generate an image
-echo date('H:i:s') . " Generate an image\n";
-$gdImage = @imagecreatetruecolor(120, 20) or die('Cannot Initialize new GD image stream');
-$textColor = imagecolorallocate($gdImage, 255, 255, 255);
-imagestring($gdImage, 1, 5, 5,  'Created with PHPExcel', $textColor);
+// Set default font
+echo date('H:i:s') . " Set default font\n";
+$objPHPExcel->getActiveSheet()->getDefaultStyle()->getFont()->setName('Arial');
+$objPHPExcel->getActiveSheet()->getDefaultStyle()->getFont()->setSize(10);
 
-// Add a drawing to the worksheet
-echo date('H:i:s') . " Add a drawing to the worksheet\n";
-$objDrawing = new PHPExcel_Worksheet_MemoryDrawing();
-$objDrawing->setName('Sample image');
-$objDrawing->setDescription('Sample image');
-$objDrawing->setImageResource($gdImage);
-$objDrawing->setRenderingFunction(PHPExcel_Worksheet_MemoryDrawing::RENDERING_JPEG);
-$objDrawing->setMimeType(PHPExcel_Worksheet_MemoryDrawing::MIMETYPE_DEFAULT);
-$objDrawing->setHeight(36);
-$objDrawing->setWorksheet($objPHPExcel->getActiveSheet());
+// Set column widths
+echo date('H:i:s') . " Set column widths\n";
+$objPHPExcel->getActiveSheet()->getColumnDimension('A')->setAutoSize(true);
+$objPHPExcel->getActiveSheet()->getColumnDimension('B')->setWidth(14);
 
+// Add some data, resembling some different data types
+echo date('H:i:s') . " Add some data\n";
+$objPHPExcel->getActiveSheet()->setCellValue('A1', 'String value:');
+$objPHPExcel->getActiveSheet()->setCellValue('B1', 'String');
+
+$objPHPExcel->getActiveSheet()->setCellValue('A2', 'Numeric value:');
+$objPHPExcel->getActiveSheet()->setCellValue('B2', 12);
+
+$objPHPExcel->getActiveSheet()->setCellValue('A3', 'Boolean value:');
+$objPHPExcel->getActiveSheet()->setCellValue('B3', true);
+
+$objPHPExcel->getActiveSheet()->setCellValue('A4', 'Percentage value:');
+$objPHPExcel->getActiveSheet()->setCellValue('B4', '10%');
+
+$objPHPExcel->getActiveSheet()->setCellValue('A5', 'Date/time value:');
+$objPHPExcel->getActiveSheet()->setCellValue('B5', '21 December 1983');
+
+$objPHPExcel->getActiveSheet()->setCellValue('A6', 'Leading zeroes:');
+$objPHPExcel->getActiveSheet()->setCellValue('B6', '0001234');
+
+// Rename sheet
+echo date('H:i:s') . " Rename sheet\n";
+$objPHPExcel->getActiveSheet()->setTitle('Advanced value binder');		
+
+		
+// Set active sheet index to the first sheet, so Excel opens this as the first sheet
+$objPHPExcel->setActiveSheetIndex(0);
+
+		
+// Save Excel 2007 file
 echo date('H:i:s') . " Write to Excel2007 format\n";
 $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 $objWriter->save(str_replace('.php', '.xlsx', __FILE__));
@@ -67,4 +104,4 @@ $objWriter->save(str_replace('.php', '.xlsx', __FILE__));
 echo date('H:i:s') . " Peak memory usage: " . (memory_get_peak_usage(true) / 1024 / 1024) . " MB\r\n";
 
 // Echo done
-echo date('H:i:s') . " Done writing files.\r\n";
+echo date('H:i:s') . " Done writing file.\r\n";

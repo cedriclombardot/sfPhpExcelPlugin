@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (C) 2006 - 2008 PHPExcel
+ * Copyright (C) 2006 - 2009 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2009 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @version    1.6.7, 2009-04-22
  */
 
 /* Modified by Bertrand Zuchuat */
@@ -35,7 +35,7 @@ print_r($objCalc->listFunctionNames());
 
 // Create new PHPExcel object
 echo date('H:i:s') . " Create new PHPExcel object\n";
-$objPHPExcel = new sfPhpExcel();
+$objPHPExcel = new PHPExcel();
 
 // Add some data, we will use some formulas here
 echo date('H:i:s') . " Add some data\n";
@@ -237,3 +237,4 @@ echo date('H:i:s') . " Peak memory usage: " . (memory_get_peak_usage(true) / 102
 
 // Echo done
 echo date('H:i:s') . " Done.\r\n";
+date('H:i:s') . " Done.\r\n";

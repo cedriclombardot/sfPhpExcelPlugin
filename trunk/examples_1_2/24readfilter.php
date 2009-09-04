@@ -22,11 +22,13 @@
  * @package    PHPExcel
  * @copyright  Copyright (c) 2006 - 2009 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/old-licenses/lgpl-2.1.txt	LGPL
- * @version    1.6.5, 2009-01-05
+ * @version    1.6.7, 2009-04-22
  */
 
 /* Modified by Bertrand Zuchuat */
 require_once 'symfony.inc.php';
+
+require_once 'PHPExcel/Reader/IReadFilter.php';
 
 // Check prerequisites
 if (!file_exists("06largescale.xlsx")) {

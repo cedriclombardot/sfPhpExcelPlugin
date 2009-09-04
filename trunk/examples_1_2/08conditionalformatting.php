@@ -2,7 +2,7 @@
 /**
  * PHPExcel
  *
- * Copyright (C) 2006 - 2008 PHPExcel
+ * Copyright (C) 2006 - 2009 PHPExcel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,9 @@
  *
  * @category   PHPExcel
  * @package    PHPExcel
- * @copyright  Copyright (c) 2006 - 2008 PHPExcel (http://www.codeplex.com/PHPExcel)
+ * @copyright  Copyright (c) 2006 - 2009 PHPExcel (http://www.codeplex.com/PHPExcel)
  * @license    http://www.gnu.org/licenses/lgpl.txt	LGPL
- * @version    1.6.0, 2008-02-14
+ * @version    1.6.7, 2009-04-22
  */
 
 /* Modified by Bertrand Zuchuat */
@@ -68,12 +68,6 @@ $objPHPExcel->getActiveSheet()->setCellValue('A7', 'Total:');
 $objPHPExcel->getActiveSheet()->setCellValue('B7', '=SUM(B2:B6)');
 
 
-// Set cell number formats
-echo date('H:i:s') . " Set cell number formats\n";
-$objPHPExcel->getActiveSheet()->getStyle('B2')->getNumberFormat()->setFormatCode(PHPExcel_Style_NumberFormat::FORMAT_CURRENCY_EUR_SIMPLE);
-$objPHPExcel->getActiveSheet()->duplicateStyle( $objPHPExcel->getActiveSheet()->getStyle('B2'), 'B3:B7' );
-
-
 // Set column widths
 echo date('H:i:s') . " Set column widths\n";
 $objPHPExcel->getActiveSheet()->getColumnDimension('A')->setWidth(30);
@@ -84,21 +78,33 @@ $objPHPExcel->getActiveSheet()->getColumnDimension('B')->setWidth(12);
 echo date('H:i:s') . " Add conditional formatting\n";
 $objConditional1 = new PHPExcel_Style_Conditional();
 $objConditional1->setConditionType(PHPExcel_Style_Conditional::CONDITION_CELLIS);
-$objConditional1->setOperatorType(PHPExcel_Style_Conditional::OPERATOR_LESSTHAN);
-$objConditional1->setCondition('0');
-$objConditional1->getStyle()->getFont()->getColor()->setARGB(PHPExcel_Style_Color::COLOR_RED);
+$objConditional1->setOperatorType(PHPExcel_Style_Conditional::OPERATOR_BETWEEN);
+$objConditional1->addCondition('200');
+$objConditional1->addCondition('400');
+$objConditional1->getStyle()->getFont()->getColor()->setARGB(PHPExcel_Style_Color::COLOR_YELLOW);
 $objConditional1->getStyle()->getFont()->setBold(true);
+$objConditional1->getStyle()->getNumberFormat()->setFormatCode(PHPExcel_Style_NumberFormat::FORMAT_CURRENCY_EUR_SIMPLE);
 
 $objConditional2 = new PHPExcel_Style_Conditional();
 $objConditional2->setConditionType(PHPExcel_Style_Conditional::CONDITION_CELLIS);
-$objConditional2->setOperatorType(PHPExcel_Style_Conditional::OPERATOR_GREATERTHANOREQUAL);
-$objConditional2->setCondition('0');
-$objConditional2->getStyle()->getFont()->getColor()->setARGB(PHPExcel_Style_Color::COLOR_GREEN);
+$objConditional2->setOperatorType(PHPExcel_Style_Conditional::OPERATOR_LESSTHAN);
+$objConditional2->addCondition('0');
+$objConditional2->getStyle()->getFont()->getColor()->setARGB(PHPExcel_Style_Color::COLOR_RED);
 $objConditional2->getStyle()->getFont()->setBold(true);
+$objConditional2->getStyle()->getNumberFormat()->setFormatCode(PHPExcel_Style_NumberFormat::FORMAT_CURRENCY_EUR_SIMPLE);
+
+$objConditional3 = new PHPExcel_Style_Conditional();
+$objConditional3->setConditionType(PHPExcel_Style_Conditional::CONDITION_CELLIS);
+$objConditional3->setOperatorType(PHPExcel_Style_Conditional::OPERATOR_GREATERTHANOREQUAL);
+$objConditional3->addCondition('0');
+$objConditional3->getStyle()->getFont()->getColor()->setARGB(PHPExcel_Style_Color::COLOR_GREEN);
+$objConditional3->getStyle()->getFont()->setBold(true);
+$objConditional3->getStyle()->getNumberFormat()->setFormatCode(PHPExcel_Style_NumberFormat::FORMAT_CURRENCY_EUR_SIMPLE);
 
 $conditionalStyles = $objPHPExcel->getActiveSheet()->getStyle('B2')->getConditionalStyles();
 array_push($conditionalStyles, $objConditional1);
 array_push($conditionalStyles, $objConditional2);
+array_push($conditionalStyles, $objConditional3);
 $objPHPExcel->getActiveSheet()->getStyle('B2')->setConditionalStyles($conditionalStyles);
 
 $objPHPExcel->getActiveSheet()->duplicateStyle( $objPHPExcel->getActiveSheet()->getStyle('B2'), 'B3:B7' );
@@ -135,7 +141,7 @@ $objPHPExcel->setActiveSheetIndex(0);
 		
 // Save Excel 2007 file
 echo date('H:i:s') . " Write to Excel2007 format\n";
-$objWriter = new PHPExcel_Writer_Excel2007($objPHPExcel);
+$objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
 $objWriter->save(str_replace('.php', '.xlsx', __FILE__));
 
 
