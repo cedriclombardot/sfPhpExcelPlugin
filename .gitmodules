@@ -1,0 +1,3 @@
+[submodule "lib/PHPExcel"]
+	path = lib/PHPExcel
+	url = git@github.com:real-chocopanda/PHPExcel.git
